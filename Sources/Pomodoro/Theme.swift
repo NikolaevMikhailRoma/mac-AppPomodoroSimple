@@ -2,14 +2,7 @@ import AppKit
 import SwiftUI
 import PomodoroCore
 
-/// The design layer's single entry point: turns the strings in `config.json`
-/// into real colours, and applies the light/dark preference.
-///
-/// Nothing here decides behaviour, and nothing in `PomodoroCore` imports it.
 enum Theme {
-
-    /// Parses `#RRGGBB` or `#RRGGBBAA`. An unparseable string falls back rather
-    /// than crashing, so a typo in the config costs one wrong colour.
     static func color(_ hex: String, fallback: NSColor = .labelColor) -> NSColor {
         var text = hex.trimmingCharacters(in: .whitespaces)
         if text.hasPrefix("#") { text.removeFirst() }
@@ -28,9 +21,6 @@ enum Theme {
         Color(nsColor: color(hex, fallback: fallback))
     }
 
-    /// Resolves a font by PostScript name. The popover uses Helvetica Neue,
-    /// which ships with macOS but is not the system font, so a missing family
-    /// has to degrade rather than crash.
     static func font(_ token: FontToken) -> Font {
         guard let nsFont = NSFont(name: token.name, size: token.size) else {
             return .system(size: token.size, weight: .thin)
@@ -49,8 +39,6 @@ enum Theme {
 }
 
 extension AppConfig {
-    /// Reads `config.json` from the app bundle. Missing or broken file means
-    /// the built-in defaults, never a failure to launch.
     static func load() -> AppConfig {
         guard let url = Bundle.module.url(forResource: "config", withExtension: "json"),
               let data = try? Data(contentsOf: url) else { return AppConfig() }

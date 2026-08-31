@@ -1,9 +1,5 @@
 import Foundation
 
-/// Everything the user can change in the Settings window.
-///
-/// Stored as one JSON blob in `UserDefaults`. Adding a field with a default
-/// value keeps old stored settings readable, so migration is never needed.
 public struct Settings: Codable, Equatable, Sendable {
     public var general: GeneralSettings
     public var intervals: IntervalSettings
@@ -68,8 +64,6 @@ public struct GeneralSettings: Codable, Equatable, Sendable {
     }
 }
 
-/// Durations are stored in minutes — that is what the user types and what the
-/// config file holds. The engine converts to seconds at the boundary.
 public struct IntervalSettings: Codable, Equatable, Sendable {
     public var workMinutes: Double
     public var shortBreakMinutes: Double
@@ -97,7 +91,6 @@ public struct IntervalSettings: Codable, Equatable, Sendable {
         longBreakAfter = c.value(.longBreakAfter, or: d.longBreakAfter)
     }
 
-    /// Configured length of a phase, in seconds.
     public func duration(for phase: Phase) -> TimeInterval {
         switch phase {
         case .work: return workMinutes * 60
@@ -112,7 +105,7 @@ public struct SoundSettings: Codable, Equatable, Sendable {
     public var breakEndedSound: String
     public var soundEnabled: Bool
     public var notificationsEnabled: Bool
-    public var volume: Double          // 0…1
+    public var volume: Double
 
     public init(
         workCompletedSound: String = "Glass",

@@ -2,19 +2,10 @@ import AppKit
 import SwiftUI
 import PomodoroCore
 
-/// Renders the popover to a PNG and exits, without opening a menu bar item.
-///
-/// A status item cannot be screenshotted from a terminal (the menu bar's icon
-/// layer is not captured without Screen Recording permission), so this is the
-/// only way to actually look at the popover while working on its layout.
-///
-///     swift run Pomodoro --snapshot /tmp/popover.png
-///     swift run Pomodoro --snapshot-settings /tmp/settings.png
 @MainActor
 enum Snapshot {
+    private static let referenceScreenshotScale: CGFloat = 2
 
-    /// Consumes a snapshot flag if present. Returns true when it rendered,
-    /// telling `main` to exit instead of launching the app.
     static func runIfRequested() -> Bool {
         let config = AppConfig.load()
 
@@ -23,7 +14,6 @@ enum Snapshot {
             return render(TimerPopoverView(timer: timer, config: config, openSettings: {}), to: path)
         }
         if let path = path(for: "--snapshot-settings") {
-            // A throwaway suite, so snapshotting never touches real settings.
             let defaults = UserDefaults(suiteName: "PomodoroSnapshot")!
             defaults.removePersistentDomain(forName: "PomodoroSnapshot")
             let store = SettingsStore(defaults: defaults)
@@ -41,7 +31,7 @@ enum Snapshot {
 
     private static func render(_ view: some View, to path: String) -> Bool {
         let renderer = ImageRenderer(content: view)
-        renderer.scale = 2      // match the Retina reference screenshots
+        renderer.scale = referenceScreenshotScale
 
         guard let image = renderer.nsImage,
               let tiff = image.tiffRepresentation,

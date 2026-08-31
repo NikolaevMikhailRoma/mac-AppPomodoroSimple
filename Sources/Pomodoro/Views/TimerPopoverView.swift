@@ -1,19 +1,11 @@
 import SwiftUI
 import PomodoroCore
 
-/// The main screen, laid out to the measurements taken off the reference.
-///
-/// The vertical rhythm is additive and adds up to the popover's height:
-/// padding 14 + header 22 + gap 39 + ring 196 + gap 28 + footer 22 + padding 14.
-/// That puts the top of the ring 75 pt below the content's top edge, where the
-/// original has it at 75.25.
 struct TimerPopoverView: View {
-
     let timer: TimerController
     let config: AppConfig
     let openSettings: () -> Void
 
-    /// Set while the digits are being typed over.
     @State private var draft: String?
     @FocusState private var editing: Bool
 
@@ -58,8 +50,6 @@ struct TimerPopoverView: View {
         .background(background)
     }
 
-    // MARK: - Header
-
     private var header: some View {
         HStack(spacing: 0) {
             Text(timer.phase.title)
@@ -73,18 +63,14 @@ struct TimerPopoverView: View {
             }
             .buttonStyle(.plain)
             .help("Stop and reset")
-            // The reference leaves a wider gap on the right than the popover's
-            // own padding, so the button is not jammed into the corner.
             .padding(.trailing, max(0, popover.closeButtonInset - popover.padding))
         }
     }
 
-    // MARK: - Dial
-
     private var dial: some View {
         ZStack {
             RingView(
-                fraction: timer.ringFraction,
+                turnFraction: timer.ringFraction,
                 color: accent,
                 trackColor: Theme.swiftUIColor(ring.trackColor, fallback: .separatorColor),
                 backgroundColor: background,
@@ -110,13 +96,6 @@ struct TimerPopoverView: View {
         .frame(width: ring.diameter, height: ring.diameter)
     }
 
-    /// Click to type a new length. Anything unparseable leaves the old value.
-    /// Available at any time, including mid-countdown.
-    ///
-    /// The draft is committed when the field loses focus, not only on Enter.
-    /// Without that it outlives the edit: the field keeps showing what was
-    /// typed while the countdown carries on underneath, which reads as a
-    /// frozen timer.
     private var digits: some View {
         Group {
             if let draft {
@@ -150,8 +129,6 @@ struct TimerPopoverView: View {
         cancelEditing()
     }
 
-    /// Drops the draft without applying it, so the digits go back to showing
-    /// the live countdown.
     private func cancelEditing() {
         draft = nil
         editing = false
@@ -161,20 +138,9 @@ struct TimerPopoverView: View {
         if draft != nil { commit() }
     }
 
-    // MARK: - Footer
-
-    /// Skip on the left, the day's count centred, settings on the right. The
-    /// two side slots are the same width so the counter lands on the middle.
     private var footer: some View {
         HStack(spacing: 0) {
-            FooterButton(
-                systemName: "forward.end",
-                size: 15,
-                color: secondary,
-                help: "Skip interval",
-                action: { commitIfEditing(); timer.skip() }
-            )
-            .frame(width: 44, alignment: .leading)
+            Spacer(minLength: 0).frame(width: 44)
 
             Spacer(minLength: 0)
 
@@ -200,8 +166,6 @@ struct TimerPopoverView: View {
     }
 }
 
-/// A bare icon button — the footer has no button chrome in the reference, and
-/// SwiftUI's default `Menu` styling was what drew the green pill here before.
 private struct FooterButton: View {
     let systemName: String
     let size: Double

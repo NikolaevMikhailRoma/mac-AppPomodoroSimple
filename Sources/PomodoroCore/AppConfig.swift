@@ -1,13 +1,5 @@
 import Foundation
 
-/// The contents of `config.json` — everything visual, kept out of the code so
-/// the look can be tuned without reading Swift.
-///
-/// Values were measured off the reference screenshots by sampling pixels and
-/// scanning the arc, not estimated by eye, so the numbers are worth keeping
-/// exact. Every field has a fallback: a missing or half-written config file
-/// degrades to the built-in defaults instead of failing to launch. Colours are
-/// plain hex strings here; turning them into real colours is the UI layer's job.
 public struct AppConfig: Codable, Equatable, Sendable {
     public var menuBar: MenuBarConfig
     public var popover: PopoverConfig
@@ -47,17 +39,11 @@ public struct AppConfig: Codable, Equatable, Sendable {
         defaults = c.value(.defaults, or: d.defaults)
     }
 
-    /// Decodes a config file, falling back to defaults on any problem.
     public static func decode(_ data: Data) -> AppConfig {
         (try? JSONDecoder().decode(AppConfig.self, from: data)) ?? AppConfig()
     }
 }
 
-/// A font by PostScript name and size.
-///
-/// The reference uses Helvetica Neue in the popover, which is not the system
-/// font — hence a name rather than a weight. The name is resolved at draw time
-/// and falls back to the system font if the family is ever missing.
 public struct FontToken: Codable, Equatable, Sendable {
     public var name: String
     public var size: Double
@@ -99,21 +85,20 @@ public struct FontsConfig: Codable, Equatable, Sendable {
     }
 }
 
-/// The digits stay the system label colour so they read correctly in light and
-/// dark and invert while the item is clicked. State is carried by the glyph
-/// beside them instead, the way the reference does it.
 public struct MenuBarConfig: Codable, Equatable, Sendable {
     public var fontSize: Double
-    /// Keeps the width steady as the digits change.
+    public var fontWeight: String
     public var monospacedDigits: Bool
     public var icon: MenuBarIconConfig
 
     public init(
-        fontSize: Double = 13,
+        fontSize: Double = 14,
+        fontWeight: String = "medium",
         monospacedDigits: Bool = true,
         icon: MenuBarIconConfig = MenuBarIconConfig()
     ) {
         self.fontSize = fontSize
+        self.fontWeight = fontWeight
         self.monospacedDigits = monospacedDigits
         self.icon = icon
     }
@@ -122,26 +107,22 @@ public struct MenuBarConfig: Codable, Equatable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = MenuBarConfig()
         fontSize = c.value(.fontSize, or: d.fontSize)
+        fontWeight = c.value(.fontWeight, or: d.fontWeight)
         monospacedDigits = c.value(.monospacedDigits, or: d.monospacedDigits)
         icon = c.value(.icon, or: d.icon)
     }
 }
 
-/// The glyph next to the digits. It is always visible — even with the digits
-/// switched off — so there is always something to click.
 public struct MenuBarIconConfig: Codable, Equatable, Sendable {
     public var symbolName: String
     public var size: Double
-    /// Work is counting down.
     public var workColor: String
-    /// A break is counting down.
     public var breakColor: String
-    /// Stopped or paused.
     public var idleColor: String
 
     public init(
         symbolName: String = "stopwatch",
-        size: Double = 13,
+        size: Double = 14,
         workColor: String = "#E5484D",
         breakColor: String = "#30A46C",
         idleColor: String = "#9B9B9B"
@@ -164,14 +145,10 @@ public struct MenuBarIconConfig: Codable, Equatable, Sendable {
     }
 }
 
-/// The vertical rhythm adds up to `height`, so changing one band means
-/// changing another: 14 + 22 + 39 + ring 196 + 28 + 22 + 14 = 335.
 public struct PopoverConfig: Codable, Equatable, Sendable {
     public var width: Double
     public var height: Double
     public var padding: Double
-    /// Extra breathing room on the right so the close button is not jammed
-    /// into the corner, matching the reference's 24.6 pt gap.
     public var closeButtonInset: Double
     public var headerHeight: Double
     public var headerToRing: Double
@@ -232,11 +209,8 @@ public struct RingConfig: Codable, Equatable, Sendable {
     public var trackColor: String
     public var workColor: String
     public var breakColor: String
-    /// Digits sit slightly above the ring's centre, as in the reference.
     public var digitsOffset: Double
-    /// Play button centre, measured down from the ring's centre.
     public var playOffset: Double
-    /// Side of the equilateral play triangle.
     public var playSide: Double
     public var playLineWidth: Double
     public var closeButtonSize: Double
@@ -286,23 +260,17 @@ public struct RingConfig: Codable, Equatable, Sendable {
         closeButtonSize = c.value(.closeButtonSize, or: d.closeButtonSize)
     }
 
-    /// Colour of the arc, digits and counter for a phase.
     public func accent(for phase: Phase) -> String {
         phase == .work ? workColor : breakColor
     }
 }
 
-/// The Settings window keeps the system font: the reference's own settings are
-/// plain AppKit, so matching them means matching macOS rather than the popover.
 public struct SettingsWindowConfig: Codable, Equatable, Sendable {
     public var width: Double
     public var height: Double
-    /// Gap between the window edge and the content box.
     public var boxMargin: Double
-    /// Gap between the box border and the labels inside it.
     public var boxPadding: Double
     public var rowHeight: Double
-    /// Popups are a fixed width regardless of their content, as in the reference.
     public var controlWidth: Double
     public var tabBarHeight: Double
     public var tabBackground: String
@@ -397,9 +365,9 @@ public struct DialConfig: Codable, Equatable, Sendable {
 
     public init(
         fullTurnMinutes: Double = 60,
-        minSeconds: Double = 10,
+        minSeconds: Double = 1,
         maxSeconds: Double = 10_800,
-        dragStepSeconds: Double = 15
+        dragStepSeconds: Double = 5
     ) {
         self.fullTurnMinutes = fullTurnMinutes
         self.minSeconds = minSeconds

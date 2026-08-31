@@ -2,16 +2,11 @@ import Foundation
 import Observation
 import PomodoroCore
 
-/// Holds the user's settings and persists them as one JSON blob in
-/// `UserDefaults`. Every write goes through `settings`, so there is exactly one
-/// place that saves and one place that notifies.
 @MainActor
 @Observable
 final class SettingsStore {
-
     private static let key = "Settings"
 
-    /// Called after any change, so the timer and the appearance can follow.
     @ObservationIgnored var onChange: ((Settings) -> Void)?
 
     @ObservationIgnored private let defaults: UserDefaults

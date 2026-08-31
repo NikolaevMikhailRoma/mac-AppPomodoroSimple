@@ -2,11 +2,12 @@
   "_note": "Values measured off the reference screenshots by sampling pixels, not by eye. Any key may be omitted — a missing key falls back to the built-in default on its own, without discarding the rest of the file.",
 
   "menuBar": {
-    "fontSize": 13,
+    "fontSize": 14,
+    "fontWeight": "medium",
     "monospacedDigits": true,
     "icon": {
       "symbolName": "stopwatch",
-      "size": 13,
+      "size": 14,
       "workColor": "#E5484D",
       "breakColor": "#30A46C",
       "idleColor": "#9B9B9B"
@@ -73,9 +74,9 @@
 
   "dial": {
     "fullTurnMinutes": 60,
-    "minSeconds": 10,
+    "minSeconds": 1,
     "maxSeconds": 10800,
-    "dragStepSeconds": 15
+    "dragStepSeconds": 5
   },
 
   "defaults": {

@@ -78,6 +78,17 @@ struct CountdownTests {
         #expect(e.runState == .idle)
         #expect(e.remaining == 25 * 60)
     }
+
+    @Test("stop discards a hand-set length and restores the configured one")
+    func stopRestoresConfiguredLength() {
+        var e = engine()
+        e.setPhaseDuration(15, now: t0)
+        e.start(now: t0)
+        #expect(e.remaining == 15.0)
+        e.stop()
+        #expect(e.phaseDuration == 25.0 * 60)
+        #expect(e.remaining == 25.0 * 60)
+    }
 }
 
 @Suite("Phase transitions")
@@ -253,7 +264,7 @@ struct TimeFormatTests {
 struct DialTests {
 
     private let dial = DurationDial(
-        fullTurnMinutes: 60, minSeconds: 10, maxSeconds: 10_800, dragStepSeconds: 15
+        fullTurnMinutes: 60, minSeconds: 10, maxSeconds: 10_800, dragStepSeconds: 5
     )
 
     @Test("a quarter turn is a quarter of the full turn")
@@ -266,8 +277,8 @@ struct DialTests {
     @Test("dragging snaps to the drag step, not to whole minutes")
     func snapsToDragStep() {
         // 0.2529 of an hour is 15:10.4 — the old minute snap made this 15:00.
-        #expect(dial.seconds(forFraction: 0.2529) == 15 * 60 + 15)
-        #expect(dial.seconds(forFraction: 0.005) == 15)
+        #expect(dial.seconds(forFraction: 0.2529) == 15 * 60 + 10)
+        #expect(dial.seconds(forFraction: 0.005) == 20)
     }
 
     @Test("the fraction round-trips back from a duration")

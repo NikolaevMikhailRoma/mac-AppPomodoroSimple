@@ -1,11 +1,6 @@
 import Foundation
 
-/// Formatting and parsing of the `mm:ss` string shown in the middle of the ring
-/// and in the menu bar. Kept here so the editable timer has one definition of
-/// what counts as valid input.
 public enum TimeFormat {
-
-    /// Seconds to `mm:ss`, or `h:mm:ss` past an hour.
     public static func string(from seconds: TimeInterval) -> String {
         let total = Int(seconds.rounded(.up))
         let h = total / 3600
@@ -16,11 +11,6 @@ public enum TimeFormat {
             : String(format: "%02d:%02d", m, s)
     }
 
-    /// Parses what the user typed over the digits.
-    ///
-    /// Accepts `"25"` (minutes), `"25:30"` (minutes and seconds) and
-    /// `"1:05:00"` (hours, minutes, seconds). Returns nil for anything else,
-    /// which the caller treats as "keep the old value".
     public static func seconds(from text: String) -> TimeInterval? {
         let parts = text.trimmingCharacters(in: .whitespaces).split(separator: ":")
         guard (1...3).contains(parts.count) else { return nil }
