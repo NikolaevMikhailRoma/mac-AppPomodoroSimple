@@ -93,7 +93,7 @@ public struct MenuBarConfig: Codable, Equatable, Sendable {
 
     public init(
         fontSize: Double = 14,
-        fontWeight: String = "medium",
+        fontWeight: String = "regular",
         monospacedDigits: Bool = true,
         icon: MenuBarIconConfig = MenuBarIconConfig()
     ) {
@@ -116,19 +116,22 @@ public struct MenuBarConfig: Codable, Equatable, Sendable {
 public struct MenuBarIconConfig: Codable, Equatable, Sendable {
     public var symbolName: String
     public var size: Double
+    public var weight: String
     public var workColor: String
     public var breakColor: String
     public var idleColor: String
 
     public init(
-        symbolName: String = "stopwatch",
-        size: Double = 14,
-        workColor: String = "#E5484D",
+        symbolName: String = "timer",
+        size: Double = 15,
+        weight: String = "light",
+        workColor: String = "#E62621",
         breakColor: String = "#30A46C",
         idleColor: String = "#9B9B9B"
     ) {
         self.symbolName = symbolName
         self.size = size
+        self.weight = weight
         self.workColor = workColor
         self.breakColor = breakColor
         self.idleColor = idleColor
@@ -139,6 +142,7 @@ public struct MenuBarIconConfig: Codable, Equatable, Sendable {
         let d = MenuBarIconConfig()
         symbolName = c.value(.symbolName, or: d.symbolName)
         size = c.value(.size, or: d.size)
+        weight = c.value(.weight, or: d.weight)
         workColor = c.value(.workColor, or: d.workColor)
         breakColor = c.value(.breakColor, or: d.breakColor)
         idleColor = c.value(.idleColor, or: d.idleColor)

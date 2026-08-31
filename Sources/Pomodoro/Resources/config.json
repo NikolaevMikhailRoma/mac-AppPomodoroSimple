@@ -3,12 +3,13 @@
 
   "menuBar": {
     "fontSize": 14,
-    "fontWeight": "medium",
+    "fontWeight": "regular",
     "monospacedDigits": true,
     "icon": {
-      "symbolName": "stopwatch",
-      "size": 14,
-      "workColor": "#E5484D",
+      "symbolName": "timer",
+      "size": 15,
+      "weight": "light",
+      "workColor": "#E62621",
       "breakColor": "#30A46C",
       "idleColor": "#9B9B9B"
     }

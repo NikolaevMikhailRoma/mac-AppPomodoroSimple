@@ -69,7 +69,7 @@ final class StatusItemController: NSObject {
 
         button.attributedTitle = NSAttributedString(
             string: timer.timeText,
-            attributes: [.font: font, .foregroundColor: NSColor.labelColor]
+            attributes: [.font: font, .foregroundColor: NSColor.textColor]
         )
     }
 
@@ -94,7 +94,7 @@ final class StatusItemController: NSObject {
         )
         image?.isTemplate = false
         return image?.withSymbolConfiguration(
-            NSImage.SymbolConfiguration(pointSize: icon.size, weight: .regular)
+            NSImage.SymbolConfiguration(pointSize: icon.size, weight: Self.weight(named: icon.weight))
                 .applying(NSImage.SymbolConfiguration(paletteColors: [iconColor]))
         )
     }
