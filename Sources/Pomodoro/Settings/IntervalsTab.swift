@@ -1,5 +1,6 @@
 import SwiftUI
 import PomodoroCore
+import PomodoroConfig
 
 struct IntervalsTab: View {
     @Bindable var store: SettingsStore
@@ -14,11 +15,11 @@ struct IntervalsTab: View {
             MinutesRow("Long break", $store.settings.intervals.longBreakMinutes, config)
 
             FormRow(label: "Long break after", metrics: metrics) {
-                HStack(spacing: 6) {
+                HStack(spacing: metrics.stepperSpacing) {
                     TextField("", value: $store.settings.intervals.longBreakAfter, format: .number)
                         .labelsHidden()
                         .multilineTextAlignment(.trailing)
-                        .frame(width: 48)
+                        .frame(width: metrics.fieldWidth)
                     Stepper("", value: $store.settings.intervals.longBreakAfter, in: 1...12)
                         .labelsHidden()
                     Text("intervals")
@@ -41,13 +42,15 @@ struct MinutesRow: View {
         self.config = config
     }
 
+    private var metrics: SettingsWindowConfig { config.settingsWindow }
+
     var body: some View {
-        FormRow(label: label, metrics: config.settingsWindow) {
-            HStack(spacing: 6) {
+        FormRow(label: label, metrics: metrics) {
+            HStack(spacing: metrics.stepperSpacing) {
                 TextField("", value: $minutes, format: .number.precision(.fractionLength(0)))
                     .labelsHidden()
                     .multilineTextAlignment(.trailing)
-                    .frame(width: 48)
+                    .frame(width: metrics.fieldWidth)
                     .onChange(of: minutes) { _, new in
                         let clamped = config.dial.dial.clamp(minutes: new)
                         if clamped != new { minutes = clamped }
@@ -60,7 +63,7 @@ struct MinutesRow: View {
                 )
                 .labelsHidden()
                 Text("min")
-                    .font(.system(size: config.settingsWindow.labelSize))
+                    .font(.system(size: metrics.labelSize))
                     .foregroundStyle(.secondary)
             }
         }

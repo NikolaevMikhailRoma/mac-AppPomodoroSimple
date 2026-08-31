@@ -1,5 +1,6 @@
 import SwiftUI
 import PomodoroCore
+import PomodoroConfig
 
 struct SoundsTab: View {
     @Bindable var store: SettingsStore
@@ -22,7 +23,7 @@ struct SoundsTab: View {
             }
             FormRow(label: "Volume", metrics: metrics, disabled: soundOff) {
                 Slider(value: $store.settings.sound.volume, in: 0...1)
-                    .frame(width: 200)
+                    .frame(width: metrics.sliderWidth)
                     .disabled(soundOff)
             }
 

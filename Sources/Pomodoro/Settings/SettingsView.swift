@@ -1,5 +1,6 @@
 import SwiftUI
 import PomodoroCore
+import PomodoroConfig
 
 struct SettingsView: View {
     @Bindable var store: SettingsStore
@@ -9,20 +10,18 @@ struct SettingsView: View {
 
     private var metrics: SettingsWindowConfig { config.settingsWindow }
 
-    private var boxTop: Double { 42 }
-
     var body: some View {
         ZStack(alignment: .top) {
-            Theme.swiftUIColor(metrics.windowBackground, fallback: .windowBackgroundColor)
+            Theme.swiftUIColor(metrics.background, fallback: .windowBackgroundColor)
                 .ignoresSafeArea()
 
             box
-                .padding(.top, boxTop)
+                .padding(.top, metrics.boxTop)
                 .padding(.horizontal, metrics.boxMargin)
                 .padding(.bottom, metrics.boxMargin)
 
             tabBar
-                .padding(.top, boxTop - metrics.tabBarHeight / 2)
+                .padding(.top, metrics.boxTop - metrics.tabBarHeight / 2)
         }
         .frame(width: metrics.width, height: metrics.height)
     }
@@ -33,7 +32,7 @@ struct SettingsView: View {
                 if index > 0 {
                     Rectangle()
                         .fill(Theme.swiftUIColor(metrics.tabDivider, fallback: .separatorColor))
-                        .frame(width: 1, height: 12)
+                        .frame(width: metrics.tabDividerWidth, height: metrics.tabDividerHeight)
                 }
                 segment(item)
             }
@@ -45,7 +44,7 @@ struct SettingsView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: metrics.cornerRadius)
-                .stroke(Theme.swiftUIColor(metrics.boxBorder, fallback: .separatorColor), lineWidth: 1)
+                .stroke(Theme.swiftUIColor(metrics.boxBorder, fallback: .separatorColor), lineWidth: metrics.borderWidth)
         )
     }
 
@@ -54,12 +53,12 @@ struct SettingsView: View {
             Text(item.title)
                 .font(.system(size: metrics.tabTextSize))
                 .foregroundStyle(Theme.swiftUIColor(metrics.tabTextColor, fallback: .labelColor))
-                .padding(.horizontal, 8)
-                .frame(height: metrics.tabBarHeight - 2)
+                .padding(.horizontal, metrics.tabPadding)
+                .frame(height: metrics.tabBarHeight - metrics.tabInset)
                 .background(
                     Group {
                         if tab == item {
-                            RoundedRectangle(cornerRadius: metrics.cornerRadius - 1)
+                            RoundedRectangle(cornerRadius: metrics.cornerRadius - metrics.innerCornerDelta)
                                 .fill(Theme.swiftUIColor(metrics.tabSelectedFill, fallback: .selectedControlColor))
                         }
                     }
@@ -79,7 +78,7 @@ struct SettingsView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: metrics.cornerRadius)
-                    .stroke(Theme.swiftUIColor(metrics.boxBorder, fallback: .separatorColor), lineWidth: 1)
+                    .stroke(Theme.swiftUIColor(metrics.boxBorder, fallback: .separatorColor), lineWidth: metrics.borderWidth)
             )
     }
 

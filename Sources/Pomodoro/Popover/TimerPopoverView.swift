@@ -1,5 +1,6 @@
 import SwiftUI
 import PomodoroCore
+import PomodoroConfig
 
 struct TimerPopoverView: View {
     let timer: TimerController
@@ -55,11 +56,9 @@ struct TimerPopoverView: View {
             Text(timer.phase.title)
                 .font(Theme.font(config.fonts.phase))
                 .foregroundStyle(dim)
-            Spacer(minLength: 8)
+            Spacer(minLength: popover.headerSpacing)
             Button(action: { commitIfEditing(); timer.stop() }) {
-                Image(systemName: "xmark.circle")
-                    .font(.system(size: ring.closeButtonSize, weight: .ultraLight))
-                    .foregroundStyle(secondary)
+                Theme.icon(config.icons.reset, color: secondary)
             }
             .buttonStyle(.plain)
             .help("Stop and reset")
@@ -71,13 +70,10 @@ struct TimerPopoverView: View {
         ZStack {
             RingView(
                 turnFraction: timer.ringFraction,
+                ring: ring,
                 color: accent,
                 trackColor: Theme.swiftUIColor(ring.trackColor, fallback: .separatorColor),
                 backgroundColor: background,
-                diameter: ring.diameter,
-                lineWidth: ring.lineWidth,
-                handleDiameter: ring.handleDiameter,
-                handleLineWidth: ring.handleLineWidth,
                 onDrag: { timer.setDuration(fraction: $0) }
             )
 
@@ -86,9 +82,8 @@ struct TimerPopoverView: View {
 
             TransportButton(
                 isRunning: timer.isRunning,
+                ring: ring,
                 color: accent,
-                side: ring.playSide,
-                lineWidth: ring.playLineWidth,
                 action: { commitIfEditing(); timer.toggle() }
             )
             .offset(y: ring.playOffset)
@@ -140,11 +135,11 @@ struct TimerPopoverView: View {
 
     private var footer: some View {
         HStack(spacing: 0) {
-            Spacer(minLength: 0).frame(width: 44)
+            Spacer(minLength: 0).frame(width: popover.footerSideWidth)
 
             Spacer(minLength: 0)
 
-            HStack(spacing: 6) {
+            HStack(spacing: popover.counterSpacing) {
                 Text("Today")
                     .foregroundStyle(secondary)
                 Text("\(timer.completedToday)")
@@ -155,29 +150,25 @@ struct TimerPopoverView: View {
             Spacer(minLength: 0)
 
             FooterButton(
-                systemName: "gearshape",
-                size: 18,
+                icon: config.icons.settings,
                 color: secondary,
                 help: "Settings",
                 action: openSettings
             )
-            .frame(width: 44, alignment: .trailing)
+            .frame(width: popover.footerSideWidth, alignment: .trailing)
         }
     }
 }
 
 private struct FooterButton: View {
-    let systemName: String
-    let size: Double
+    let icon: IconConfig
     let color: Color
     let help: String
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: systemName)
-                .font(.system(size: size, weight: .ultraLight))
-                .foregroundStyle(color)
+            Theme.icon(icon, color: color)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

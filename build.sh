@@ -13,9 +13,9 @@ mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources"
 cp ".build/release/$APP_NAME" "$BUNDLE/Contents/MacOS/$APP_NAME"
 cp Info.plist "$BUNDLE/Contents/Info.plist"
 
-# config.json ships inside a SwiftPM resource bundle; Bundle.module finds it
+# config.json ships inside the PomodoroConfig resource bundle; Bundle.module finds it
 # in Contents/Resources at runtime.
-cp -R ".build/release/${APP_NAME}_${APP_NAME}.bundle" "$BUNDLE/Contents/Resources/"
+cp -R ".build/release/${APP_NAME}_PomodoroConfig.bundle" "$BUNDLE/Contents/Resources/"
 
 if [ -f Resources/AppIcon.icns ]; then
     cp Resources/AppIcon.icns "$BUNDLE/Contents/Resources/AppIcon.icns"

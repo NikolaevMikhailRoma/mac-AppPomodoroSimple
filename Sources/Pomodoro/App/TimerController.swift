@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import PomodoroCore
+import PomodoroConfig
 
 @MainActor
 @Observable

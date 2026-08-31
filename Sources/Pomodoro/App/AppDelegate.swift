@@ -1,5 +1,6 @@
 import AppKit
 import PomodoroCore
+import PomodoroConfig
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -10,7 +11,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let config = AppConfig.load()
-        settingsStore = SettingsStore()
+        // Длительности из конфига действуют только на первом запуске:
+        // дальше настройки пользователя лежат в UserDefaults и имеют приоритет.
+        settingsStore = SettingsStore(fallback: Settings(intervals: config.intervals))
         timer = TimerController(config: config, settings: settingsStore.settings)
         settingsWindow = SettingsWindowController(store: settingsStore, config: config)
 

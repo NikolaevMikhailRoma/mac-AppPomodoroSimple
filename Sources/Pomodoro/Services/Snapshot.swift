@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import PomodoroCore
+import PomodoroConfig
 
 @MainActor
 enum Snapshot {

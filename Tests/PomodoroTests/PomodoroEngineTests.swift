@@ -1,6 +1,7 @@
 import Testing
 import Foundation
 @testable import PomodoroCore
+@testable import PomodoroConfig
 
 private let t0 = Date(timeIntervalSince1970: 1_000_000)
 
@@ -322,15 +323,15 @@ struct ConfigTests {
         let json = """
         {"menuBar":{"fontSize":15,"monospacedDigits":false},
          "dial":{"fullTurnMinutes":90,"minSeconds":30,"maxSeconds":7200,"dragStepSeconds":5},
-         "defaults":{"workMinutes":50,"shortBreakMinutes":10,"longBreakMinutes":20,"longBreakAfter":3}}
+         "intervals":{"workMinutes":50,"shortBreakMinutes":10,"longBreakMinutes":20,"longBreakAfter":3}}
         """
         let c = AppConfig.decode(Data(json.utf8))
         #expect(c.menuBar.fontSize == 15)
         #expect(c.menuBar.monospacedDigits == false)
         #expect(c.dial.fullTurnMinutes == 90)
         #expect(c.dial.minSeconds == 30)
-        #expect(c.defaults.workMinutes == 50)
-        #expect(c.defaults.longBreakAfter == 3)
+        #expect(c.intervals.workMinutes == 50)
+        #expect(c.intervals.longBreakAfter == 3)
     }
 
     @Test("missing keys fall back one at a time, not all at once")
@@ -375,10 +376,38 @@ struct ConfigTests {
 
     @Test("the ring picks its accent from the phase")
     func ringAccent() {
-        let ring = RingConfig(workColor: "#111111", breakColor: "#222222")
+        var ring = RingConfig()
+        ring.workColor = "#111111"
+        ring.breakColor = "#222222"
         #expect(ring.accent(for: .work) == "#111111")
         #expect(ring.accent(for: .shortBreak) == "#222222")
         #expect(ring.accent(for: .longBreak) == "#222222")
+    }
+
+    @Test("a colour written as a palette name resolves to its hex")
+    func paletteResolves() {
+        let json = ##"{"palette":{"accent":"#ABCDEF"},"ring":{"workColor":"accent"}}"##
+        let c = AppConfig.decode(Data(json.utf8))
+        #expect(c.ring.workColor == "#ABCDEF")
+    }
+
+    @Test("a literal hex is left alone, and an unknown name stays as typed")
+    func paletteLeavesLiteralsAlone() {
+        let json = ##"{"ring":{"workColor":"#123456","breakColor":"nosuchcolour"}}"##
+        let c = AppConfig.decode(Data(json.utf8))
+        #expect(c.ring.workColor == "#123456")
+        #expect(c.ring.breakColor == "nosuchcolour")
+    }
+
+    @Test("the shipped config.json decodes and its palette names resolve")
+    func shippedFile() {
+        let c = AppConfig.load()
+        // Значок в строке меню насыщенный, дуга кольца — светлее. Оба имени
+        // взяты из палитры, значит подстановка сработала на живом файле.
+        #expect(c.menuBar.workColor == "#E62621")
+        #expect(c.ring.workColor == "#EC958C")
+        #expect(c.icons.menuBar.symbol == "timer")
+        #expect(c.intervals.workMinutes == 25)
     }
 
     @Test("stored settings survive a field being added later")

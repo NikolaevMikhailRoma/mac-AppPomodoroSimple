@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import PomodoroCore
+import PomodoroConfig
 
 @MainActor
 final class StatusItemController: NSObject {
@@ -62,7 +63,7 @@ final class StatusItemController: NSObject {
         }
 
         let size = config.menuBar.fontSize
-        let weight = Self.weight(named: config.menuBar.fontWeight)
+        let weight = Theme.weight(named: config.menuBar.fontWeight)
         let font = config.menuBar.monospacedDigits
             ? NSFont.monospacedDigitSystemFont(ofSize: size, weight: weight)
             : NSFont.systemFont(ofSize: size, weight: weight)
@@ -73,40 +74,18 @@ final class StatusItemController: NSObject {
         )
     }
 
-    private static func weight(named name: String) -> NSFont.Weight {
-        switch name.lowercased() {
-        case "ultralight": return .ultraLight
-        case "thin": return .thin
-        case "light": return .light
-        case "regular": return .regular
-        case "medium": return .medium
-        case "semibold": return .semibold
-        case "bold": return .bold
-        default: return .regular
-        }
-    }
-
     private var stateIcon: NSImage? {
-        let icon = config.menuBar.icon
-        let image = NSImage(
-            systemSymbolName: icon.symbolName,
-            accessibilityDescription: "Pomodoro"
-        )
-        image?.isTemplate = false
-        return image?.withSymbolConfiguration(
-            NSImage.SymbolConfiguration(pointSize: icon.size, weight: Self.weight(named: icon.weight))
-                .applying(NSImage.SymbolConfiguration(paletteColors: [iconColor]))
-        )
+        Theme.image(config.icons.menuBar, color: iconColor)
     }
 
     private var iconColor: NSColor {
-        let icon = config.menuBar.icon
+        let menuBar = config.menuBar
         guard timer.isRunning else {
-            return Theme.color(icon.idleColor, fallback: .secondaryLabelColor)
+            return Theme.color(menuBar.idleColor, fallback: .secondaryLabelColor)
         }
         return timer.phase == .work
-            ? Theme.color(icon.workColor, fallback: .systemRed)
-            : Theme.color(icon.breakColor, fallback: .systemGreen)
+            ? Theme.color(menuBar.workColor, fallback: .systemRed)
+            : Theme.color(menuBar.breakColor, fallback: .systemGreen)
     }
 
     @objc private func handleClick() {

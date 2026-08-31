@@ -1,0 +1,117 @@
+{
+  "_note": "Значения замерены попиксельно по скриншотам оригинала, а не подобраны на глаз. Любой ключ можно удалить — пропавший ключ сам падает на дефолт из Swift и не роняет остальной файл. Что значит каждое число, написано над соответствующим полем в Sources/PomodoroConfig/*.swift.",
+
+  "palette": {
+    "work": "#E62621",
+    "workSoft": "#EC958C",
+    "break": "#30A46C",
+    "breakSoft": "#8CD3A2",
+    "idle": "#9B9B9B"
+  },
+
+  "icons": {
+    "menuBar":  { "symbol": "timer",        "size": 15, "weight": "light" },
+    "settings": { "symbol": "gearshape",    "size": 18, "weight": "ultralight" },
+    "reset":    { "symbol": "xmark.circle", "size": 22, "weight": "ultralight" }
+  },
+
+  "menuBar": {
+    "fontSize": 14,
+    "fontWeight": "regular",
+    "monospacedDigits": true,
+    "workColor": "work",
+    "breakColor": "break",
+    "idleColor": "idle"
+  },
+
+  "popover": {
+    "width": 256,
+    "height": 335,
+    "padding": 14,
+    "closeButtonInset": 24,
+    "headerHeight": 22,
+    "headerSpacing": 8,
+    "headerToRing": 39,
+    "ringToFooter": 28,
+    "footerHeight": 22,
+    "footerSideWidth": 44,
+    "counterSpacing": 6,
+    "background": "#252525",
+    "textSecondary": "#C8C8C8",
+    "textDim": "#646464"
+  },
+
+  "ring": {
+    "diameter": 196,
+    "lineWidth": 4,
+    "handleDiameter": 22,
+    "handleLineWidth": 2,
+    "trackColor": "#3D3D3D",
+    "workColor": "workSoft",
+    "breakColor": "breakSoft",
+    "digitsOffset": -9.5,
+    "playOffset": 57.75,
+    "playSide": 34,
+    "playLineWidth": 1,
+    "playTriangleRatio": 0.866,
+    "playBarWidthRatio": 0.26,
+    "playBarHeightRatio": 0.82,
+    "playGapRatio": 0.24
+  },
+
+  "fonts": {
+    "digits":  { "name": "HelveticaNeue-Thin",  "size": 55 },
+    "counter": { "name": "HelveticaNeue-Light", "size": 20 },
+    "phase":   { "name": "HelveticaNeue-Light", "size": 15 }
+  },
+
+  "settingsWindow": {
+    "width": 540,
+    "height": 400,
+    "boxMargin": 20,
+    "boxPadding": 24,
+    "boxTop": 42,
+    "rowHeight": 27,
+    "rowSpacing": 8,
+    "controlWidth": 119,
+    "fieldWidth": 48,
+    "stepperSpacing": 6,
+    "sliderWidth": 200,
+    "sectionTopPadding": 22,
+    "sectionBottomPadding": 12,
+    "tabBarHeight": 22,
+    "tabInset": 2,
+    "tabPadding": 8,
+    "tabDividerWidth": 1,
+    "tabDividerHeight": 12,
+    "tabBackground": "#333333",
+    "tabSelectedFill": "#666666",
+    "tabDivider": "#2B2B2B",
+    "tabTextColor": "#E0E0E0",
+    "tabTextSize": 13,
+    "cornerRadius": 4,
+    "innerCornerDelta": 1,
+    "borderWidth": 1,
+    "background": "#303132",
+    "boxBackground": "#373738",
+    "boxBorder": "#505051",
+    "labelColor": "#D1D1D1",
+    "labelSize": 15,
+    "sectionHeaderColor": "#8C8C8C",
+    "sectionHeaderSize": 13
+  },
+
+  "dial": {
+    "fullTurnMinutes": 60,
+    "minSeconds": 1,
+    "maxSeconds": 10800,
+    "dragStepSeconds": 5
+  },
+
+  "intervals": {
+    "workMinutes": 25,
+    "shortBreakMinutes": 5,
+    "longBreakMinutes": 15,
+    "longBreakAfter": 4
+  }
+}

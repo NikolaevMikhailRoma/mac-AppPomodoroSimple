@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import PomodoroCore
+import PomodoroConfig
 
 @MainActor
 final class SettingsWindowController {
@@ -16,7 +17,7 @@ final class SettingsWindowController {
         )
         window.title = "Settings"
         window.isReleasedWhenClosed = false
-        window.backgroundColor = Theme.color(metrics.windowBackground, fallback: .windowBackgroundColor)
+        window.backgroundColor = Theme.color(metrics.background, fallback: .windowBackgroundColor)
         window.center()
         window.contentView = NSHostingView(rootView: SettingsView(store: store, config: config))
     }

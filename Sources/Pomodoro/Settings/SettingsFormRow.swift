@@ -1,5 +1,6 @@
 import SwiftUI
 import PomodoroCore
+import PomodoroConfig
 
 struct FormRow<Content: View>: View {
     let label: String
@@ -8,7 +9,7 @@ struct FormRow<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: metrics.rowSpacing) {
             Text(label)
                 .font(.system(size: metrics.labelSize))
                 .foregroundStyle(
@@ -16,7 +17,7 @@ struct FormRow<Content: View>: View {
                         ? Color.secondary
                         : Theme.swiftUIColor(metrics.labelColor, fallback: .labelColor)
                 )
-            Spacer(minLength: 8)
+            Spacer(minLength: metrics.rowSpacing)
             content()
         }
         .frame(height: metrics.rowHeight)
@@ -32,7 +33,7 @@ struct SectionHeader: View {
             .font(.system(size: metrics.sectionHeaderSize))
             .foregroundStyle(Theme.swiftUIColor(metrics.sectionHeaderColor, fallback: .secondaryLabelColor))
             .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.top, 22)
-            .padding(.bottom, 12)
+            .padding(.top, metrics.sectionTopPadding)
+            .padding(.bottom, metrics.sectionBottomPadding)
     }
 }

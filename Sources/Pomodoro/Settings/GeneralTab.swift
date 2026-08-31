@@ -1,6 +1,6 @@
 import SwiftUI
-import ServiceManagement
 import PomodoroCore
+import PomodoroConfig
 
 struct GeneralTab: View {
     @Bindable var store: SettingsStore
@@ -38,22 +38,6 @@ struct GeneralTab: View {
 
             Button("Quit Pomodoro") { NSApp.terminate(nil) }
                 .frame(maxWidth: .infinity)
-        }
-    }
-}
-
-enum LoginItem {
-    @MainActor
-    static func set(_ enabled: Bool) -> Bool {
-        do {
-            if enabled {
-                try SMAppService.mainApp.register()
-            } else {
-                try SMAppService.mainApp.unregister()
-            }
-            return enabled
-        } catch {
-            return SMAppService.mainApp.status == .enabled
         }
     }
 }
