@@ -37,6 +37,7 @@ final class TimerController {
             autoStartNextInterval: settings.general.autoStartNextInterval
         )
         self.countedDay = Calendar.current.startOfDay(for: Date())
+        notifier.requestPermission()
     }
 
     // MARK: - Read
@@ -48,10 +49,6 @@ final class TimerController {
 
     /// Fraction of the dial the remaining time fills — what the ring draws.
     var ringFraction: Double { dial.fraction(forSeconds: engine.remaining) }
-
-    /// The duration is only editable while the countdown is not moving, so a
-    /// stray drag cannot reset a pomodoro in progress.
-    var isEditable: Bool { engine.runState != .running }
 
     // MARK: - Commands
 

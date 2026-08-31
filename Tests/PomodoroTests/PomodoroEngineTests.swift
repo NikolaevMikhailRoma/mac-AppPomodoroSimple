@@ -252,7 +252,9 @@ struct TimeFormatTests {
 @Suite("Ring geometry")
 struct DialTests {
 
-    private let dial = DurationDial(fullTurnMinutes: 60, minMinutes: 1, maxMinutes: 180, stepMinutes: 1)
+    private let dial = DurationDial(
+        fullTurnMinutes: 60, minSeconds: 10, maxSeconds: 10_800, dragStepSeconds: 15
+    )
 
     @Test("a quarter turn is a quarter of the full turn")
     func fractionToSeconds() {
@@ -261,10 +263,11 @@ struct DialTests {
         #expect(dial.seconds(forFraction: 1) == 60 * 60)
     }
 
-    @Test("dragging snaps to whole minutes")
-    func snapsToStep() {
-        #expect(dial.seconds(forFraction: 0.257) == 15 * 60)
-        #expect(dial.seconds(forFraction: 0.262) == 16 * 60)
+    @Test("dragging snaps to the drag step, not to whole minutes")
+    func snapsToDragStep() {
+        // 0.2529 of an hour is 15:10.4 — the old minute snap made this 15:00.
+        #expect(dial.seconds(forFraction: 0.2529) == 15 * 60 + 15)
+        #expect(dial.seconds(forFraction: 0.005) == 15)
     }
 
     @Test("the fraction round-trips back from a duration")
@@ -278,11 +281,25 @@ struct DialTests {
         #expect(dial.fraction(forSeconds: 90 * 60) == 1)
     }
 
-    @Test("values are clamped to the allowed range")
+    @Test("clamping keeps a value in range without rounding it")
+    func clampDoesNotSnap() {
+        // The whole point: a typed 0:10 has to survive intact.
+        #expect(dial.clamp(seconds: 10) == 10)
+        #expect(dial.clamp(seconds: 37) == 37)
+        #expect(dial.clamp(seconds: 95) == 95)
+    }
+
+    @Test("values outside the range are pulled to the nearest end")
     func clamps() {
-        #expect(dial.clamp(minutes: 0) == 1)
-        #expect(dial.clamp(minutes: 500) == 180)
-        #expect(dial.seconds(forFraction: 0) == 60)   // never below minMinutes
+        #expect(dial.clamp(seconds: 0) == 10)
+        #expect(dial.clamp(seconds: 99_999) == 10_800)
+        #expect(dial.seconds(forFraction: 0) == 10)   // never below minSeconds
+    }
+
+    @Test("the minute range for the settings fields follows the seconds range")
+    func minuteRange() {
+        #expect(dial.maxMinutes == 180)
+        #expect(abs(dial.minMinutes - 10.0 / 60.0) < 0.0001)
     }
 }
 
@@ -293,13 +310,14 @@ struct ConfigTests {
     func decodesFull() {
         let json = """
         {"menuBar":{"fontSize":15,"monospacedDigits":false},
-         "dial":{"fullTurnMinutes":90,"minMinutes":2,"maxMinutes":120,"stepMinutes":5},
+         "dial":{"fullTurnMinutes":90,"minSeconds":30,"maxSeconds":7200,"dragStepSeconds":5},
          "defaults":{"workMinutes":50,"shortBreakMinutes":10,"longBreakMinutes":20,"longBreakAfter":3}}
         """
         let c = AppConfig.decode(Data(json.utf8))
         #expect(c.menuBar.fontSize == 15)
         #expect(c.menuBar.monospacedDigits == false)
         #expect(c.dial.fullTurnMinutes == 90)
+        #expect(c.dial.minSeconds == 30)
         #expect(c.defaults.workMinutes == 50)
         #expect(c.defaults.longBreakAfter == 3)
     }
@@ -322,6 +340,34 @@ struct ConfigTests {
     @Test("an unreadable file gives the built-in defaults")
     func brokenFile() {
         #expect(AppConfig.decode(Data("not json".utf8)) == AppConfig())
+    }
+
+    @Test("fonts decode by PostScript name and size")
+    func fonts() {
+        let json = ##"{"fonts":{"digits":{"name":"Menlo","size":40}}}"##
+        let c = AppConfig.decode(Data(json.utf8))
+        #expect(c.fonts.digits.name == "Menlo")
+        #expect(c.fonts.digits.size == 40)
+        // The other two keep their defaults rather than vanishing.
+        #expect(c.fonts.counter == FontsConfig().counter)
+        #expect(c.fonts.phase.name == "HelveticaNeue-Light")
+    }
+
+    @Test("the settings window grid decodes")
+    func settingsWindowGrid() {
+        let json = ##"{"settingsWindow":{"rowHeight":31,"boxPadding":30}}"##
+        let c = AppConfig.decode(Data(json.utf8))
+        #expect(c.settingsWindow.rowHeight == 31)
+        #expect(c.settingsWindow.boxPadding == 30)
+        #expect(c.settingsWindow.width == SettingsWindowConfig().width)
+    }
+
+    @Test("the ring picks its accent from the phase")
+    func ringAccent() {
+        let ring = RingConfig(workColor: "#111111", breakColor: "#222222")
+        #expect(ring.accent(for: .work) == "#111111")
+        #expect(ring.accent(for: .shortBreak) == "#222222")
+        #expect(ring.accent(for: .longBreak) == "#222222")
     }
 
     @Test("stored settings survive a field being added later")

@@ -1,31 +1,81 @@
 {
+  "_note": "Values measured off the reference screenshots by sampling pixels, not by eye. Any key may be omitted — a missing key falls back to the built-in default on its own, without discarding the rest of the file.",
+
   "menuBar": {
     "fontSize": 13,
-    "monospacedDigits": true
+    "monospacedDigits": true,
+    "icon": {
+      "symbolName": "stopwatch",
+      "size": 13,
+      "workColor": "#E5484D",
+      "breakColor": "#30A46C",
+      "idleColor": "#9B9B9B"
+    }
   },
 
   "popover": {
-    "width": 260,
-    "height": 300,
-    "backgroundColor": "#2F2F2F",
-    "secondaryTextColor": "#9B9B9B"
+    "width": 256,
+    "height": 335,
+    "padding": 14,
+    "closeButtonInset": 24,
+    "headerHeight": 22,
+    "headerToRing": 39,
+    "ringToFooter": 28,
+    "footerHeight": 22,
+    "background": "#252525",
+    "textSecondary": "#C8C8C8",
+    "textDim": "#646464"
   },
 
   "ring": {
-    "diameter": 170,
-    "lineWidth": 6,
-    "handleDiameter": 18,
-    "trackColor": "#4A4A4A",
-    "workColor": "#E5484D",
-    "breakColor": "#30A46C",
-    "timeFontSize": 42
+    "diameter": 196,
+    "lineWidth": 4,
+    "handleDiameter": 22,
+    "handleLineWidth": 2,
+    "trackColor": "#3D3D3D",
+    "workColor": "#EC958C",
+    "breakColor": "#8CD3A2",
+    "digitsOffset": -9.5,
+    "playOffset": 57.75,
+    "playSide": 34,
+    "playLineWidth": 1,
+    "closeButtonSize": 22
+  },
+
+  "fonts": {
+    "digits":  { "name": "HelveticaNeue-Thin",  "size": 55 },
+    "counter": { "name": "HelveticaNeue-Light", "size": 20 },
+    "phase":   { "name": "HelveticaNeue-Light", "size": 15 }
+  },
+
+  "settingsWindow": {
+    "width": 540,
+    "height": 400,
+    "boxMargin": 20,
+    "boxPadding": 24,
+    "rowHeight": 27,
+    "controlWidth": 119,
+    "tabBarHeight": 22,
+    "tabBackground": "#333333",
+    "tabSelectedFill": "#666666",
+    "tabDivider": "#2B2B2B",
+    "tabTextColor": "#E0E0E0",
+    "tabTextSize": 13,
+    "cornerRadius": 4,
+    "windowBackground": "#303132",
+    "boxBackground": "#373738",
+    "boxBorder": "#505051",
+    "labelColor": "#D1D1D1",
+    "sectionHeaderColor": "#8C8C8C",
+    "labelSize": 15,
+    "sectionHeaderSize": 13
   },
 
   "dial": {
     "fullTurnMinutes": 60,
-    "minMinutes": 1,
-    "maxMinutes": 180,
-    "stepMinutes": 1
+    "minSeconds": 10,
+    "maxSeconds": 10800,
+    "dragStepSeconds": 15
   },
 
   "defaults": {

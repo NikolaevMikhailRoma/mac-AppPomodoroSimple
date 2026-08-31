@@ -28,6 +28,16 @@ enum Theme {
         Color(nsColor: color(hex, fallback: fallback))
     }
 
+    /// Resolves a font by PostScript name. The popover uses Helvetica Neue,
+    /// which ships with macOS but is not the system font, so a missing family
+    /// has to degrade rather than crash.
+    static func font(_ token: FontToken) -> Font {
+        guard let nsFont = NSFont(name: token.name, size: token.size) else {
+            return .system(size: token.size, weight: .thin)
+        }
+        return Font(nsFont)
+    }
+
     @MainActor
     static func applyAppearance(_ appearance: Appearance) {
         switch appearance {

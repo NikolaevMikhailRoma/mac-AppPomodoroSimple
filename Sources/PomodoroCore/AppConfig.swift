@@ -1,15 +1,19 @@
 import Foundation
 
-/// The contents of `config.json` — the tuning knobs that are not worth a
-/// settings screen: colours, sizes, ranges, defaults.
+/// The contents of `config.json` — everything visual, kept out of the code so
+/// the look can be tuned without reading Swift.
 ///
-/// Every field has a fallback, so a missing or half-written config file
+/// Values were measured off the reference screenshots by sampling pixels and
+/// scanning the arc, not estimated by eye, so the numbers are worth keeping
+/// exact. Every field has a fallback: a missing or half-written config file
 /// degrades to the built-in defaults instead of failing to launch. Colours are
 /// plain hex strings here; turning them into real colours is the UI layer's job.
 public struct AppConfig: Codable, Equatable, Sendable {
     public var menuBar: MenuBarConfig
     public var popover: PopoverConfig
     public var ring: RingConfig
+    public var fonts: FontsConfig
+    public var settingsWindow: SettingsWindowConfig
     public var dial: DialConfig
     public var defaults: IntervalSettings
 
@@ -17,12 +21,16 @@ public struct AppConfig: Codable, Equatable, Sendable {
         menuBar: MenuBarConfig = MenuBarConfig(),
         popover: PopoverConfig = PopoverConfig(),
         ring: RingConfig = RingConfig(),
+        fonts: FontsConfig = FontsConfig(),
+        settingsWindow: SettingsWindowConfig = SettingsWindowConfig(),
         dial: DialConfig = DialConfig(),
         defaults: IntervalSettings = IntervalSettings()
     ) {
         self.menuBar = menuBar
         self.popover = popover
         self.ring = ring
+        self.fonts = fonts
+        self.settingsWindow = settingsWindow
         self.dial = dial
         self.defaults = defaults
     }
@@ -33,6 +41,8 @@ public struct AppConfig: Codable, Equatable, Sendable {
         menuBar = c.value(.menuBar, or: d.menuBar)
         popover = c.value(.popover, or: d.popover)
         ring = c.value(.ring, or: d.ring)
+        fonts = c.value(.fonts, or: d.fonts)
+        settingsWindow = c.value(.settingsWindow, or: d.settingsWindow)
         dial = c.value(.dial, or: d.dial)
         defaults = c.value(.defaults, or: d.defaults)
     }
@@ -43,20 +53,69 @@ public struct AppConfig: Codable, Equatable, Sendable {
     }
 }
 
-/// The menu bar deliberately has no colour of its own: the digits use the
-/// system label colour, so they stay legible in light and dark and invert
-/// correctly while the item is clicked. Phase colour lives on the ring only.
+/// A font by PostScript name and size.
+///
+/// The reference uses Helvetica Neue in the popover, which is not the system
+/// font — hence a name rather than a weight. The name is resolved at draw time
+/// and falls back to the system font if the family is ever missing.
+public struct FontToken: Codable, Equatable, Sendable {
+    public var name: String
+    public var size: Double
+
+    public init(name: String, size: Double) {
+        self.name = name
+        self.size = size
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = FontToken(name: "HelveticaNeue-Light", size: 13)
+        name = c.value(.name, or: d.name)
+        size = c.value(.size, or: d.size)
+    }
+}
+
+public struct FontsConfig: Codable, Equatable, Sendable {
+    public var digits: FontToken
+    public var counter: FontToken
+    public var phase: FontToken
+
+    public init(
+        digits: FontToken = FontToken(name: "HelveticaNeue-Thin", size: 55),
+        counter: FontToken = FontToken(name: "HelveticaNeue-Light", size: 20),
+        phase: FontToken = FontToken(name: "HelveticaNeue-Light", size: 15)
+    ) {
+        self.digits = digits
+        self.counter = counter
+        self.phase = phase
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = FontsConfig()
+        digits = c.value(.digits, or: d.digits)
+        counter = c.value(.counter, or: d.counter)
+        phase = c.value(.phase, or: d.phase)
+    }
+}
+
+/// The digits stay the system label colour so they read correctly in light and
+/// dark and invert while the item is clicked. State is carried by the glyph
+/// beside them instead, the way the reference does it.
 public struct MenuBarConfig: Codable, Equatable, Sendable {
     public var fontSize: Double
     /// Keeps the width steady as the digits change.
     public var monospacedDigits: Bool
+    public var icon: MenuBarIconConfig
 
     public init(
         fontSize: Double = 13,
-        monospacedDigits: Bool = true
+        monospacedDigits: Bool = true,
+        icon: MenuBarIconConfig = MenuBarIconConfig()
     ) {
         self.fontSize = fontSize
         self.monospacedDigits = monospacedDigits
+        self.icon = icon
     }
 
     public init(from decoder: Decoder) throws {
@@ -64,25 +123,88 @@ public struct MenuBarConfig: Codable, Equatable, Sendable {
         let d = MenuBarConfig()
         fontSize = c.value(.fontSize, or: d.fontSize)
         monospacedDigits = c.value(.monospacedDigits, or: d.monospacedDigits)
+        icon = c.value(.icon, or: d.icon)
     }
 }
 
+/// The glyph next to the digits. It is always visible — even with the digits
+/// switched off — so there is always something to click.
+public struct MenuBarIconConfig: Codable, Equatable, Sendable {
+    public var symbolName: String
+    public var size: Double
+    /// Work is counting down.
+    public var workColor: String
+    /// A break is counting down.
+    public var breakColor: String
+    /// Stopped or paused.
+    public var idleColor: String
+
+    public init(
+        symbolName: String = "stopwatch",
+        size: Double = 13,
+        workColor: String = "#E5484D",
+        breakColor: String = "#30A46C",
+        idleColor: String = "#9B9B9B"
+    ) {
+        self.symbolName = symbolName
+        self.size = size
+        self.workColor = workColor
+        self.breakColor = breakColor
+        self.idleColor = idleColor
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = MenuBarIconConfig()
+        symbolName = c.value(.symbolName, or: d.symbolName)
+        size = c.value(.size, or: d.size)
+        workColor = c.value(.workColor, or: d.workColor)
+        breakColor = c.value(.breakColor, or: d.breakColor)
+        idleColor = c.value(.idleColor, or: d.idleColor)
+    }
+}
+
+/// The vertical rhythm adds up to `height`, so changing one band means
+/// changing another: 14 + 22 + 39 + ring 196 + 28 + 22 + 14 = 335.
 public struct PopoverConfig: Codable, Equatable, Sendable {
     public var width: Double
     public var height: Double
-    public var backgroundColor: String
-    public var secondaryTextColor: String
+    public var padding: Double
+    /// Extra breathing room on the right so the close button is not jammed
+    /// into the corner, matching the reference's 24.6 pt gap.
+    public var closeButtonInset: Double
+    public var headerHeight: Double
+    public var headerToRing: Double
+    public var ringToFooter: Double
+    public var footerHeight: Double
+    public var background: String
+    public var textSecondary: String
+    public var textDim: String
 
     public init(
-        width: Double = 260,
-        height: Double = 300,
-        backgroundColor: String = "#2F2F2F",
-        secondaryTextColor: String = "#9B9B9B"
+        width: Double = 256,
+        height: Double = 335,
+        padding: Double = 14,
+        closeButtonInset: Double = 24,
+        headerHeight: Double = 22,
+        headerToRing: Double = 39,
+        ringToFooter: Double = 28,
+        footerHeight: Double = 22,
+        background: String = "#252525",
+        textSecondary: String = "#C8C8C8",
+        textDim: String = "#646464"
     ) {
         self.width = width
         self.height = height
-        self.backgroundColor = backgroundColor
-        self.secondaryTextColor = secondaryTextColor
+        self.padding = padding
+        self.closeButtonInset = closeButtonInset
+        self.headerHeight = headerHeight
+        self.headerToRing = headerToRing
+        self.ringToFooter = ringToFooter
+        self.footerHeight = footerHeight
+        self.background = background
+        self.textSecondary = textSecondary
+        self.textDim = textDim
     }
 
     public init(from decoder: Decoder) throws {
@@ -90,8 +212,15 @@ public struct PopoverConfig: Codable, Equatable, Sendable {
         let d = PopoverConfig()
         width = c.value(.width, or: d.width)
         height = c.value(.height, or: d.height)
-        backgroundColor = c.value(.backgroundColor, or: d.backgroundColor)
-        secondaryTextColor = c.value(.secondaryTextColor, or: d.secondaryTextColor)
+        padding = c.value(.padding, or: d.padding)
+        closeButtonInset = c.value(.closeButtonInset, or: d.closeButtonInset)
+        headerHeight = c.value(.headerHeight, or: d.headerHeight)
+        headerToRing = c.value(.headerToRing, or: d.headerToRing)
+        ringToFooter = c.value(.ringToFooter, or: d.ringToFooter)
+        footerHeight = c.value(.footerHeight, or: d.footerHeight)
+        background = c.value(.background, or: d.background)
+        textSecondary = c.value(.textSecondary, or: d.textSecondary)
+        textDim = c.value(.textDim, or: d.textDim)
     }
 }
 
@@ -99,27 +228,45 @@ public struct RingConfig: Codable, Equatable, Sendable {
     public var diameter: Double
     public var lineWidth: Double
     public var handleDiameter: Double
+    public var handleLineWidth: Double
     public var trackColor: String
     public var workColor: String
     public var breakColor: String
-    public var timeFontSize: Double
+    /// Digits sit slightly above the ring's centre, as in the reference.
+    public var digitsOffset: Double
+    /// Play button centre, measured down from the ring's centre.
+    public var playOffset: Double
+    /// Side of the equilateral play triangle.
+    public var playSide: Double
+    public var playLineWidth: Double
+    public var closeButtonSize: Double
 
     public init(
-        diameter: Double = 170,
-        lineWidth: Double = 6,
-        handleDiameter: Double = 18,
-        trackColor: String = "#4A4A4A",
-        workColor: String = "#E5484D",
-        breakColor: String = "#30A46C",
-        timeFontSize: Double = 42
+        diameter: Double = 196,
+        lineWidth: Double = 4,
+        handleDiameter: Double = 22,
+        handleLineWidth: Double = 2,
+        trackColor: String = "#3D3D3D",
+        workColor: String = "#EC958C",
+        breakColor: String = "#8CD3A2",
+        digitsOffset: Double = -9.5,
+        playOffset: Double = 57.75,
+        playSide: Double = 34,
+        playLineWidth: Double = 1,
+        closeButtonSize: Double = 22
     ) {
         self.diameter = diameter
         self.lineWidth = lineWidth
         self.handleDiameter = handleDiameter
+        self.handleLineWidth = handleLineWidth
         self.trackColor = trackColor
         self.workColor = workColor
         self.breakColor = breakColor
-        self.timeFontSize = timeFontSize
+        self.digitsOffset = digitsOffset
+        self.playOffset = playOffset
+        self.playSide = playSide
+        self.playLineWidth = playLineWidth
+        self.closeButtonSize = closeButtonSize
     }
 
     public init(from decoder: Decoder) throws {
@@ -128,46 +275,153 @@ public struct RingConfig: Codable, Equatable, Sendable {
         diameter = c.value(.diameter, or: d.diameter)
         lineWidth = c.value(.lineWidth, or: d.lineWidth)
         handleDiameter = c.value(.handleDiameter, or: d.handleDiameter)
+        handleLineWidth = c.value(.handleLineWidth, or: d.handleLineWidth)
         trackColor = c.value(.trackColor, or: d.trackColor)
         workColor = c.value(.workColor, or: d.workColor)
         breakColor = c.value(.breakColor, or: d.breakColor)
-        timeFontSize = c.value(.timeFontSize, or: d.timeFontSize)
+        digitsOffset = c.value(.digitsOffset, or: d.digitsOffset)
+        playOffset = c.value(.playOffset, or: d.playOffset)
+        playSide = c.value(.playSide, or: d.playSide)
+        playLineWidth = c.value(.playLineWidth, or: d.playLineWidth)
+        closeButtonSize = c.value(.closeButtonSize, or: d.closeButtonSize)
+    }
+
+    /// Colour of the arc, digits and counter for a phase.
+    public func accent(for phase: Phase) -> String {
+        phase == .work ? workColor : breakColor
+    }
+}
+
+/// The Settings window keeps the system font: the reference's own settings are
+/// plain AppKit, so matching them means matching macOS rather than the popover.
+public struct SettingsWindowConfig: Codable, Equatable, Sendable {
+    public var width: Double
+    public var height: Double
+    /// Gap between the window edge and the content box.
+    public var boxMargin: Double
+    /// Gap between the box border and the labels inside it.
+    public var boxPadding: Double
+    public var rowHeight: Double
+    /// Popups are a fixed width regardless of their content, as in the reference.
+    public var controlWidth: Double
+    public var tabBarHeight: Double
+    public var tabBackground: String
+    public var tabSelectedFill: String
+    public var tabDivider: String
+    public var tabTextColor: String
+    public var tabTextSize: Double
+    public var cornerRadius: Double
+    public var windowBackground: String
+    public var boxBackground: String
+    public var boxBorder: String
+    public var labelColor: String
+    public var sectionHeaderColor: String
+    public var labelSize: Double
+    public var sectionHeaderSize: Double
+
+    public init(
+        width: Double = 540,
+        height: Double = 400,
+        boxMargin: Double = 20,
+        boxPadding: Double = 24,
+        rowHeight: Double = 27,
+        controlWidth: Double = 119,
+        tabBarHeight: Double = 22,
+        tabBackground: String = "#333333",
+        tabSelectedFill: String = "#666666",
+        tabDivider: String = "#2B2B2B",
+        tabTextColor: String = "#E0E0E0",
+        tabTextSize: Double = 13,
+        cornerRadius: Double = 4,
+        windowBackground: String = "#303132",
+        boxBackground: String = "#373738",
+        boxBorder: String = "#505051",
+        labelColor: String = "#D1D1D1",
+        sectionHeaderColor: String = "#8C8C8C",
+        labelSize: Double = 15,
+        sectionHeaderSize: Double = 13
+    ) {
+        self.width = width
+        self.height = height
+        self.boxMargin = boxMargin
+        self.boxPadding = boxPadding
+        self.rowHeight = rowHeight
+        self.controlWidth = controlWidth
+        self.tabBarHeight = tabBarHeight
+        self.tabBackground = tabBackground
+        self.tabSelectedFill = tabSelectedFill
+        self.tabDivider = tabDivider
+        self.tabTextColor = tabTextColor
+        self.tabTextSize = tabTextSize
+        self.cornerRadius = cornerRadius
+        self.windowBackground = windowBackground
+        self.boxBackground = boxBackground
+        self.boxBorder = boxBorder
+        self.labelColor = labelColor
+        self.sectionHeaderColor = sectionHeaderColor
+        self.labelSize = labelSize
+        self.sectionHeaderSize = sectionHeaderSize
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = SettingsWindowConfig()
+        width = c.value(.width, or: d.width)
+        height = c.value(.height, or: d.height)
+        boxMargin = c.value(.boxMargin, or: d.boxMargin)
+        boxPadding = c.value(.boxPadding, or: d.boxPadding)
+        rowHeight = c.value(.rowHeight, or: d.rowHeight)
+        controlWidth = c.value(.controlWidth, or: d.controlWidth)
+        tabBarHeight = c.value(.tabBarHeight, or: d.tabBarHeight)
+        tabBackground = c.value(.tabBackground, or: d.tabBackground)
+        tabSelectedFill = c.value(.tabSelectedFill, or: d.tabSelectedFill)
+        tabDivider = c.value(.tabDivider, or: d.tabDivider)
+        tabTextColor = c.value(.tabTextColor, or: d.tabTextColor)
+        tabTextSize = c.value(.tabTextSize, or: d.tabTextSize)
+        cornerRadius = c.value(.cornerRadius, or: d.cornerRadius)
+        windowBackground = c.value(.windowBackground, or: d.windowBackground)
+        boxBackground = c.value(.boxBackground, or: d.boxBackground)
+        boxBorder = c.value(.boxBorder, or: d.boxBorder)
+        labelColor = c.value(.labelColor, or: d.labelColor)
+        sectionHeaderColor = c.value(.sectionHeaderColor, or: d.sectionHeaderColor)
+        labelSize = c.value(.labelSize, or: d.labelSize)
+        sectionHeaderSize = c.value(.sectionHeaderSize, or: d.sectionHeaderSize)
     }
 }
 
 public struct DialConfig: Codable, Equatable, Sendable {
     public var fullTurnMinutes: Double
-    public var minMinutes: Double
-    public var maxMinutes: Double
-    public var stepMinutes: Double
+    public var minSeconds: Double
+    public var maxSeconds: Double
+    public var dragStepSeconds: Double
 
     public init(
         fullTurnMinutes: Double = 60,
-        minMinutes: Double = 1,
-        maxMinutes: Double = 180,
-        stepMinutes: Double = 1
+        minSeconds: Double = 10,
+        maxSeconds: Double = 10_800,
+        dragStepSeconds: Double = 15
     ) {
         self.fullTurnMinutes = fullTurnMinutes
-        self.minMinutes = minMinutes
-        self.maxMinutes = maxMinutes
-        self.stepMinutes = stepMinutes
+        self.minSeconds = minSeconds
+        self.maxSeconds = maxSeconds
+        self.dragStepSeconds = dragStepSeconds
     }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = DialConfig()
         fullTurnMinutes = c.value(.fullTurnMinutes, or: d.fullTurnMinutes)
-        minMinutes = c.value(.minMinutes, or: d.minMinutes)
-        maxMinutes = c.value(.maxMinutes, or: d.maxMinutes)
-        stepMinutes = c.value(.stepMinutes, or: d.stepMinutes)
+        minSeconds = c.value(.minSeconds, or: d.minSeconds)
+        maxSeconds = c.value(.maxSeconds, or: d.maxSeconds)
+        dragStepSeconds = c.value(.dragStepSeconds, or: d.dragStepSeconds)
     }
 
     public var dial: DurationDial {
         DurationDial(
             fullTurnMinutes: fullTurnMinutes,
-            minMinutes: minMinutes,
-            maxMinutes: maxMinutes,
-            stepMinutes: stepMinutes
+            minSeconds: minSeconds,
+            maxSeconds: maxSeconds,
+            dragStepSeconds: dragStepSeconds
         )
     }
 }

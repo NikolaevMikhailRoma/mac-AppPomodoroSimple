@@ -7,20 +7,19 @@ import PomodoroCore
 @MainActor
 final class SettingsWindowController {
 
-    /// Wide enough that "Notifications & Sounds" fits on one segment.
-    static let size = CGSize(width: 520, height: 360)
-
     private let window: NSWindow
 
     init(store: SettingsStore, config: AppConfig) {
+        let metrics = config.settingsWindow
         window = NSWindow(
-            contentRect: NSRect(origin: .zero, size: Self.size),
+            contentRect: NSRect(x: 0, y: 0, width: metrics.width, height: metrics.height),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
         window.title = "Settings"
         window.isReleasedWhenClosed = false     // reopened, not rebuilt
+        window.backgroundColor = Theme.color(metrics.windowBackground, fallback: .windowBackgroundColor)
         window.center()
         window.contentView = NSHostingView(rootView: SettingsView(store: store, config: config))
     }
