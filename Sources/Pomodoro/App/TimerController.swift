@@ -35,6 +35,7 @@ final class TimerController {
     var isRunning: Bool { engine.runState == .running }
     var phase: Phase { engine.phase }
     var completedToday: Int { engine.completedToday }
+    var skipTitle: String { engine.phase == .work ? "Finish work" : "Skip break" }
 
     var ringFraction: Double { dial.fraction(forSeconds: engine.remaining) }
 
@@ -52,6 +53,7 @@ final class TimerController {
     }
 
     func skip() {
+        rollOverDayIfNeeded()
         handle(engine.skip())
         syncTicker()
         changed()
@@ -66,9 +68,12 @@ final class TimerController {
         setDuration(seconds: dial.seconds(forFraction: fraction))
     }
 
-    func setDuration(text: String) {
-        guard let seconds = TimeFormat.seconds(from: text) else { return }
+    /// true, если введённое больше предела и таймер встал на предел.
+    @discardableResult
+    func setDuration(text: String) -> Bool {
+        guard let seconds = TimeFormat.seconds(from: text) else { return false }
         setDuration(seconds: seconds)
+        return seconds > dial.maxSeconds
     }
 
     func apply(_ new: Settings) {

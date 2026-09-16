@@ -9,7 +9,7 @@ public struct DurationDial: Equatable, Sendable {
     public init(
         fullTurnMinutes: Double = 60,
         minSeconds: Double = 10,
-        maxSeconds: Double = 10_800,
+        maxSeconds: Double = 3_599,
         dragStepSeconds: Double = 5
     ) {
         self.fullTurnMinutes = max(1, fullTurnMinutes)
@@ -37,7 +37,20 @@ public struct DurationDial: Equatable, Sendable {
     public var minMinutes: Double { minSeconds / 60 }
     public var maxMinutes: Double { maxSeconds / 60 }
 
+    /// Поля настроек — целые минуты, но верхний предел точный: «60» в
+    /// настройках даёт 59:59 на таймере, а не урезается до 59:00.
     public func clamp(minutes: Double) -> Double {
-        clamp(seconds: minutes * 60) / 60
+        let whole = minutes.rounded()
+        return whole * 60 >= maxSeconds ? maxMinutes : max(whole, minMinutes)
+    }
+
+    /// Длительности из настроек в пределах регулятора. Нужна для настроек,
+    /// сохранённых до того, как предел стал меньше.
+    public func clamp(intervals: IntervalSettings) -> IntervalSettings {
+        var clamped = intervals
+        clamped.workMinutes = clamp(seconds: intervals.workMinutes * 60) / 60
+        clamped.shortBreakMinutes = clamp(seconds: intervals.shortBreakMinutes * 60) / 60
+        clamped.longBreakMinutes = clamp(seconds: intervals.longBreakMinutes * 60) / 60
+        return clamped
     }
 }

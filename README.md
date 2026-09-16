@@ -4,8 +4,9 @@
 
 A minimal native macOS menu bar pomodoro timer: red while working, green on a
 break, grey when stopped. No Dock icon, no main window. Drag the ring to set the
-interval or click the digits to type it; right-click the menu bar icon for
-Skip interval, Settings and Quit.
+interval (up to 59:59) or click the digits to type it. The ▷| button finishes
+work early and counts it — handy when you forgot to start the timer — or skips a
+break. Right-click the menu bar icon for the same action, Settings and Quit.
 
 ![Settings](assets/settings.png)
 

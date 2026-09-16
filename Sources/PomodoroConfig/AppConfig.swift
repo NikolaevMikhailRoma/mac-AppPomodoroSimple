@@ -64,8 +64,8 @@ public enum Palette {
     ]
 }
 
-/// Значок: имя системного символа, кегль и вес. Одна структура на все три
-/// применения — строка меню, шестерёнка, крестик.
+/// Значок: имя системного символа, кегль и вес. Одна структура на все
+/// применения — строка меню, шестерёнка, пропуск, крестик.
 public struct IconConfig: Codable, Equatable, Sendable {
     public var symbol: String
     public var size: Double
@@ -83,6 +83,8 @@ public struct IconsConfig: Codable, Equatable, Sendable {
     public var menuBar = IconConfig(symbol: "timer", size: 15, weight: "light")
     /// Шестерёнка в подвале попапа.
     public var settings = IconConfig(symbol: "gearshape", size: 18, weight: "ultralight")
+    /// Слева в подвале попапа, напротив шестерёнки: сразу к следующему интервалу.
+    public var skip = IconConfig(symbol: "forward.end", size: 18, weight: "ultralight")
     /// Крестик в шапке попапа: останавливает таймер и сбрасывает его к началу фазы.
     public var reset = IconConfig(symbol: "xmark.circle", size: 22, weight: "ultralight")
 
@@ -107,6 +109,8 @@ public struct FontsConfig: Codable, Equatable, Sendable {
     public var digits = FontToken(name: "HelveticaNeue-Thin", size: 55)
     /// «Today N» в подвале.
     public var counter = FontToken(name: "HelveticaNeue-Light", size: 20)
+    /// «Max 59:59» под цифрами, когда введено больше предела.
+    public var hint = FontToken(name: "HelveticaNeue-Light", size: 13)
     /// Название фазы в шапке.
     public var phase = FontToken(name: "HelveticaNeue-Light", size: 15)
 
@@ -118,7 +122,9 @@ public struct DialConfig: Codable, Equatable, Sendable {
     /// Сколько минут укладывается в полный оборот кольца.
     public var fullTurnMinutes = 60.0
     public var minSeconds = 1.0
-    public var maxSeconds = 10_800.0
+    /// 59:59. Час и больше выводится как 1:00:00 — на символ шире, и цифры
+    /// перестают помещаться в кольцо.
+    public var maxSeconds = 3_599.0
     /// Шаг перетаскивания. Одна точка дуги ≈ 5.8 секунды, поэтому мельче 5
     /// значение перестаёт быть повторяемым. Ввод с клавиатуры не округляется.
     public var dragStepSeconds = 5.0

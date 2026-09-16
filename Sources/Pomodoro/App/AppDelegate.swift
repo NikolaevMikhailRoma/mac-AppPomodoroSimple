@@ -14,6 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Длительности из конфига действуют только на первом запуске:
         // дальше настройки пользователя лежат в UserDefaults и имеют приоритет.
         settingsStore = SettingsStore(fallback: Settings(intervals: config.intervals))
+        // Сохранённые раньше длительности могли быть больше нынешнего предела.
+        settingsStore.settings.intervals = config.dial.dial.clamp(intervals: settingsStore.settings.intervals)
         timer = TimerController(config: config, settings: settingsStore.settings)
         settingsWindow = SettingsWindowController(store: settingsStore, loginItem: LoginItem(), config: config)
 

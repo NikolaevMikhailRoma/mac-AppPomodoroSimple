@@ -8,6 +8,7 @@ struct TimerPopoverView: View {
     let openSettings: () -> Void
 
     @State private var draft: String?
+    @State private var limitHints = 0
     @FocusState private var editing: Bool
 
     private var ring: RingConfig { config.ring }
@@ -80,6 +81,14 @@ struct TimerPopoverView: View {
             digits
                 .offset(y: ring.digitsOffset)
 
+            TransientHint(
+                text: "Max \(TimeFormat.string(from: timer.dial.maxSeconds))",
+                trigger: limitHints
+            )
+            .font(Theme.font(config.fonts.hint))
+            .foregroundStyle(secondary)
+            .offset(y: ring.hintOffset)
+
             TransportButton(
                 isRunning: timer.isRunning,
                 ring: ring,
@@ -120,7 +129,7 @@ struct TimerPopoverView: View {
     }
 
     private func commit() {
-        if let draft { timer.setDuration(text: draft) }
+        if let draft, timer.setDuration(text: draft) { limitHints += 1 }
         cancelEditing()
     }
 
@@ -135,7 +144,13 @@ struct TimerPopoverView: View {
 
     private var footer: some View {
         HStack(spacing: 0) {
-            Spacer(minLength: 0).frame(width: popover.footerSideWidth)
+            FooterButton(
+                icon: config.icons.skip,
+                color: secondary,
+                help: timer.skipTitle,
+                action: { commitIfEditing(); timer.skip() }
+            )
+            .frame(width: popover.footerSideWidth, alignment: .leading)
 
             Spacer(minLength: 0)
 
