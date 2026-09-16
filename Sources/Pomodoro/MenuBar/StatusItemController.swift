@@ -115,7 +115,7 @@ final class StatusItemController: NSObject {
         popover.performClose(nil)
 
         let menu = NSMenu()
-        menu.addItem(menuItem("Skip interval", #selector(skipInterval)))
+        menu.addItem(menuItem(timer.skipTitle, #selector(skipInterval)))
         menu.addItem(.separator())
         menu.addItem(menuItem("Settings…", #selector(showSettings)))
         menu.addItem(menuItem("Quit Pomodoro", #selector(quit)))

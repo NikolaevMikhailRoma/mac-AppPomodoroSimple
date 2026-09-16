@@ -17,8 +17,8 @@ public struct PopoverConfig: Codable, Equatable, Sendable {
     public var headerToRing = 39.0
     public var ringToFooter = 28.0
     public var footerHeight = 22.0
-    /// Ширина боковых слотов подвала. Слева слот пустой — он держит «Today N»
-    /// ровно по центру, уравновешивая шестерёнку справа.
+    /// Ширина боковых слотов подвала: слева пропуск, справа шестерёнка. Слоты
+    /// равны, поэтому «Today N» стоит ровно по центру.
     public var footerSideWidth = 44.0
     /// Зазор между словом «Today» и числом.
     public var counterSpacing = 6.0
@@ -44,6 +44,8 @@ public struct RingConfig: Codable, Equatable, Sendable {
     /// Цифры стоят не по центру кольца, а чуть выше: под ними кнопка play.
     public var digitsOffset = -9.5
     public var playOffset = 57.75
+    /// Подсказка о пределе — в зазоре между цифрами и кнопкой play.
+    public var hintOffset = 26.0
     /// Сторона квадрата, в который вписана кнопка play/pause. Всё остальное
     /// в кнопке — доли от неё, поэтому кнопка меняет размер целиком.
     public var playSide = 34.0

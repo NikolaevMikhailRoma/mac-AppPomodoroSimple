@@ -36,6 +36,8 @@ struct MinutesRow: View {
     @Binding var minutes: Double
     let config: AppConfig
 
+    @State private var limitHints = 0
+
     init(_ label: String, _ minutes: Binding<Double>, _ config: AppConfig) {
         self.label = label
         self._minutes = minutes
@@ -54,6 +56,7 @@ struct MinutesRow: View {
                     .onChange(of: minutes) { _, new in
                         let clamped = config.dial.dial.clamp(minutes: new)
                         if clamped != new { minutes = clamped }
+                        if new.rounded() > limitMinutes { limitHints += 1 }
                     }
                 Stepper(
                     "",
@@ -66,6 +69,16 @@ struct MinutesRow: View {
                     .font(.system(size: metrics.labelSize))
                     .foregroundStyle(.secondary)
             }
+            // Слева от поля, поверх свободного места: ряд не сдвигается.
+            .overlay(alignment: .leading) { [spacing = metrics.rowSpacing] in
+                TransientHint(text: "Max \(Int(limitMinutes)) min", trigger: limitHints)
+                    .font(.system(size: metrics.sectionHeaderSize))
+                    .foregroundStyle(Theme.swiftUIColor(metrics.sectionHeaderColor, fallback: .secondaryLabelColor))
+                    .alignmentGuide(.leading) { $0[.trailing] + spacing }
+            }
         }
     }
+
+    /// Предел в том виде, в каком его видно в поле: 59:59 показывается как 60.
+    private var limitMinutes: Double { config.dial.dial.maxMinutes.rounded(.up) }
 }

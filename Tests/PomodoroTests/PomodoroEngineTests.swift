@@ -154,14 +154,36 @@ struct TransitionTests {
         #expect(e.remaining == 4 * 60)
     }
 
-    @Test("skipping does not count as a completed interval")
-    func skipDoesNotCount() {
+    @Test("finishing work early counts it, even if the timer never ran")
+    func skipWorkCounts() {
         var e = engine()
         e.start(now: t0)
         let events = e.skip(now: t0.addingTimeInterval(60))
         #expect(events == [.phaseFinished(.work), .phaseStarted(.shortBreak)])
-        #expect(e.completedToday == 0)
+        #expect(e.completedToday == 1)
         #expect(e.phase == .shortBreak)
+
+        var forgotten = engine()
+        _ = forgotten.skip(now: t0)
+        #expect(forgotten.completedToday == 1)
+    }
+
+    @Test("skipping a break counts nothing")
+    func skipBreakDoesNotCount() {
+        var e = engine()
+        _ = e.skip(now: t0)
+        _ = e.skip(now: t0)
+        #expect(e.phase == .work)
+        #expect(e.completedToday == 1)
+    }
+
+    @Test("work finished by hand leads to the long break like a timed one")
+    func skippedWorkReachesLongBreak() {
+        var e = engine(longAfter: 2)
+        _ = e.skip(now: t0)   // work 1 → short break
+        _ = e.skip(now: t0)   // → work
+        _ = e.skip(now: t0)   // work 2 → long break
+        #expect(e.phase == .longBreak)
     }
 
     @Test("a break ends back at work")
@@ -312,6 +334,29 @@ struct DialTests {
     func minuteRange() {
         #expect(dial.maxMinutes == 180)
         #expect(abs(dial.minMinutes - 10.0 / 60.0) < 0.0001)
+    }
+
+    @Test("the default limit is 59:59, and 60 minutes in settings reach it")
+    func underAnHour() {
+        let dial = DurationDial()
+        #expect(dial.clamp(seconds: 60 * 60) == 3_599)
+        #expect(TimeFormat.string(from: dial.clamp(seconds: 99_999)) == "59:59")
+        #expect(TimeFormat.string(from: dial.clamp(minutes: 60) * 60) == "59:59")
+        #expect(TimeFormat.string(from: dial.clamp(minutes: 90) * 60) == "59:59")
+        #expect(dial.clamp(minutes: 59) == 59)
+        // The stepper steps down from 59.98 to 58.98 — that lands on 59, not 58:59.
+        #expect(dial.clamp(minutes: dial.maxMinutes - 1) == 59)
+    }
+
+    @Test("stored intervals over the limit are pulled back under it")
+    func clampsStoredIntervals() {
+        let dial = DurationDial()
+        let stored = IntervalSettings(workMinutes: 90, shortBreakMinutes: 5, longBreakMinutes: 75, longBreakAfter: 3)
+        let clamped = dial.clamp(intervals: stored)
+        #expect(TimeFormat.string(from: clamped.duration(for: .work)) == "59:59")
+        #expect(clamped.shortBreakMinutes == 5)
+        #expect(TimeFormat.string(from: clamped.duration(for: .longBreak)) == "59:59")
+        #expect(clamped.longBreakAfter == 3)
     }
 }
 

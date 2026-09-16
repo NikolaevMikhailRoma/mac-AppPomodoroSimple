@@ -12,6 +12,7 @@
   "icons": {
     "menuBar":  { "symbol": "timer",        "size": 15, "weight": "light" },
     "settings": { "symbol": "gearshape",    "size": 18, "weight": "ultralight" },
+    "skip":     { "symbol": "forward.end",  "size": 18, "weight": "ultralight" },
     "reset":    { "symbol": "xmark.circle", "size": 22, "weight": "ultralight" }
   },
 
@@ -51,6 +52,7 @@
     "breakColor": "breakSoft",
     "digitsOffset": -9.5,
     "playOffset": 57.75,
+    "hintOffset": 26,
     "playSide": 34,
     "playLineWidth": 1,
     "playTriangleRatio": 0.866,
@@ -62,6 +64,7 @@
   "fonts": {
     "digits":  { "name": "HelveticaNeue-Thin",  "size": 55 },
     "counter": { "name": "HelveticaNeue-Light", "size": 20 },
+    "hint":    { "name": "HelveticaNeue-Light", "size": 13 },
     "phase":   { "name": "HelveticaNeue-Light", "size": 15 }
   },
 
@@ -104,7 +107,7 @@
   "dial": {
     "fullTurnMinutes": 60,
     "minSeconds": 1,
-    "maxSeconds": 10800,
+    "maxSeconds": 3599,
     "dragStepSeconds": 5
   },
 
