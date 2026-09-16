@@ -360,6 +360,55 @@ struct DialTests {
     }
 }
 
+@Suite("Dragging the ring")
+struct DialDragTests {
+
+    @Test("the handle follows the cursor around the ring")
+    func follows() {
+        var d = DialDrag(startingAt: 0.25)
+        #expect(d.move(to: 0.3) == 0.3)
+        #expect(d.move(to: 0.2) == 0.2)
+    }
+
+    @Test("going back past twelve o'clock stops at zero instead of jumping to 59:55")
+    func stopsAtZero() {
+        var d = DialDrag(startingAt: 0.02)
+        #expect(d.move(to: 0.001) == 0.001)
+        #expect(d.move(to: 0.98) == 0)
+        #expect(d.move(to: 0.7) == 0)
+        // Circling round the bottom does not drag the handle along.
+        #expect(d.move(to: 0.45) == 0)
+        #expect(d.move(to: 0.2) == 0)
+    }
+
+    @Test("going forward past twelve o'clock stops at a full turn instead of jumping to 00:05")
+    func stopsAtFullTurn() {
+        var d = DialDrag(startingAt: 0.97)
+        #expect(d.move(to: 0.02) == 1)
+        #expect(d.move(to: 0.3) == 1)
+    }
+
+    @Test("a stopped handle is picked up again when the cursor comes back to it")
+    func releases() {
+        var d = DialDrag(startingAt: 0.02)
+        _ = d.move(to: 0.95)
+        #expect(d.move(to: 0.97) == 0)   // still on the wrong side
+        #expect(d.move(to: 0.03) == 0.03)
+        #expect(d.move(to: 0.1) == 0.1)
+
+        var full = DialDrag(startingAt: 0.98)
+        _ = full.move(to: 0.1)
+        #expect(full.move(to: 0.97) == 0.97)
+    }
+
+    @Test("distance is measured around the circle")
+    func circularDistance() {
+        #expect(abs(DialDrag.distance(0.98, 0.02) - 0.04) < 1e-9)
+        #expect(abs(DialDrag.distance(0.2, 0.5) - 0.3) < 1e-9)
+        #expect(DialDrag.distance(1, 0) < 1e-9)
+    }
+}
+
 @Suite("Config loading")
 struct ConfigTests {
 
