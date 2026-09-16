@@ -38,18 +38,15 @@ public enum Appearance: String, Codable, CaseIterable, Sendable {
 
 public struct GeneralSettings: Codable, Equatable, Sendable {
     public var appearance: Appearance
-    public var launchAtStartup: Bool
     public var showTimerInMenuBar: Bool
     public var autoStartNextInterval: Bool
 
     public init(
         appearance: Appearance = .auto,
-        launchAtStartup: Bool = false,
         showTimerInMenuBar: Bool = true,
         autoStartNextInterval: Bool = false
     ) {
         self.appearance = appearance
-        self.launchAtStartup = launchAtStartup
         self.showTimerInMenuBar = showTimerInMenuBar
         self.autoStartNextInterval = autoStartNextInterval
     }
@@ -58,7 +55,6 @@ public struct GeneralSettings: Codable, Equatable, Sendable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = GeneralSettings()
         appearance = c.value(.appearance, or: d.appearance)
-        launchAtStartup = c.value(.launchAtStartup, or: d.launchAtStartup)
         showTimerInMenuBar = c.value(.showTimerInMenuBar, or: d.showTimerInMenuBar)
         autoStartNextInterval = c.value(.autoStartNextInterval, or: d.autoStartNextInterval)
     }

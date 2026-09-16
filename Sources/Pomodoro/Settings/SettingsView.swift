@@ -4,6 +4,7 @@ import PomodoroConfig
 
 struct SettingsView: View {
     @Bindable var store: SettingsStore
+    let loginItem: LoginItem
     let config: AppConfig
 
     @State private var tab: SettingsTab = .general
@@ -85,7 +86,7 @@ struct SettingsView: View {
     @ViewBuilder
     private var content: some View {
         switch tab {
-        case .general: GeneralTab(store: store, metrics: metrics)
+        case .general: GeneralTab(store: store, loginItem: loginItem, metrics: metrics)
         case .intervals: IntervalsTab(store: store, config: config)
         case .sounds: SoundsTab(store: store, metrics: metrics)
         }
