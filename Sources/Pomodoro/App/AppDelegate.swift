@@ -15,7 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // дальше настройки пользователя лежат в UserDefaults и имеют приоритет.
         settingsStore = SettingsStore(fallback: Settings(intervals: config.intervals))
         timer = TimerController(config: config, settings: settingsStore.settings)
-        settingsWindow = SettingsWindowController(store: settingsStore, config: config)
+        settingsWindow = SettingsWindowController(store: settingsStore, loginItem: LoginItem(), config: config)
 
         settingsStore.onChange = { [weak self] settings in
             self?.timer.apply(settings)

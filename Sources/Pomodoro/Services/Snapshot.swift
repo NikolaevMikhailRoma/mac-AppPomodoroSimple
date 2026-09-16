@@ -18,7 +18,7 @@ enum Snapshot {
             let defaults = UserDefaults(suiteName: "PomodoroSnapshot")!
             defaults.removePersistentDomain(forName: "PomodoroSnapshot")
             let store = SettingsStore(defaults: defaults)
-            return render(SettingsView(store: store, config: config), to: path)
+            return render(SettingsView(store: store, loginItem: LoginItem(), config: config), to: path)
         }
         return false
     }

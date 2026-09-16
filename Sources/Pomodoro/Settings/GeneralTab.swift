@@ -4,6 +4,7 @@ import PomodoroConfig
 
 struct GeneralTab: View {
     @Bindable var store: SettingsStore
+    let loginItem: LoginItem
     let metrics: SettingsWindowConfig
 
     var body: some View {
@@ -17,11 +18,21 @@ struct GeneralTab: View {
             }
             FormRow(label: "Launch at startup", metrics: metrics) {
                 Toggle("", isOn: Binding(
-                    get: { store.settings.general.launchAtStartup },
-                    set: { store.settings.general.launchAtStartup = LoginItem.set($0) }
+                    get: { loginItem.isEnabled },
+                    set: { loginItem.set($0) }
                 ))
                 .toggleStyle(.checkbox)
                 .labelsHidden()
+            }
+            if loginItem.isBlockedBySystem {
+                HStack(spacing: metrics.rowSpacing) {
+                    Text("Turned off in System Settings → Login Items")
+                        .font(.system(size: metrics.sectionHeaderSize))
+                        .foregroundStyle(Theme.swiftUIColor(metrics.sectionHeaderColor, fallback: .secondaryLabelColor))
+                    Spacer(minLength: metrics.rowSpacing)
+                    Button("Open") { loginItem.openSystemSettings() }
+                }
+                .frame(height: metrics.rowHeight)
             }
             FormRow(label: "Show timer in menu bar", metrics: metrics) {
                 Toggle("", isOn: $store.settings.general.showTimerInMenuBar)
