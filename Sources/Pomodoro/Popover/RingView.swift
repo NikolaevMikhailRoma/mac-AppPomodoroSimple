@@ -1,4 +1,5 @@
 import SwiftUI
+import PomodoroCore
 import PomodoroConfig
 
 struct RingView: View {
@@ -8,6 +9,8 @@ struct RingView: View {
     let trackColor: Color
     let backgroundColor: Color
     let onDrag: (Double) -> Void
+
+    @State private var drag: DialDrag?
 
     var body: some View {
         ZStack {
@@ -37,8 +40,25 @@ struct RingView: View {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
                 let center = CGPoint(x: ring.diameter / 2, y: ring.diameter / 2)
-                onDrag(Self.turnFraction(of: value.location, around: center))
+                let raw = Self.turnFraction(of: value.location, around: center)
+
+                guard var current = drag else {
+                    // Нажатие у ручки берёт её как есть, не сдвигая время;
+                    // нажатие в другом месте кольца ставит ручку туда.
+                    if DialDrag.distance(raw, turnFraction) < DialDrag.grabDistance {
+                        drag = DialDrag(startingAt: turnFraction)
+                    } else {
+                        drag = DialDrag(startingAt: raw)
+                        onDrag(raw)
+                    }
+                    return
+                }
+                let before = current.fraction
+                let after = current.move(to: raw)
+                drag = current
+                if after != before { onDrag(after) }
             }
+            .onEnded { _ in drag = nil }
     }
 
     /// Угол от центра, отсчитанный от двенадцати часов по часовой стрелке.
