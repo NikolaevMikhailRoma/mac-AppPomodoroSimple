@@ -1,26 +1,26 @@
 import Foundation
 import PomodoroCore
 
-/// Попап под значком в строке меню.
+/// The popover under the menu bar icon.
 ///
-/// Вертикальный ритм задан так, что сумма всех высот и распорок равна `height`.
-/// Меняешь одно — пересчитай остальные, иначе содержимое поедет.
+/// The vertical rhythm is set so that every height and spacer adds up to
+/// `height`. Change one and recompute the rest, or the content drifts.
 public struct PopoverConfig: Codable, Equatable, Sendable {
     public var width = 256.0
     public var height = 335.0
     public var padding = 14.0
-    /// Отступ крестика от правого края окна, а не от края содержимого.
+    /// The close button's inset from the window edge, not from the content edge.
     public var closeButtonInset = 24.0
     public var headerHeight = 22.0
-    /// Минимальный зазор между названием фазы и крестиком.
+    /// The smallest gap between the phase name and the close button.
     public var headerSpacing = 8.0
     public var headerToRing = 39.0
     public var ringToFooter = 28.0
     public var footerHeight = 22.0
-    /// Ширина боковых слотов подвала: слева пропуск, справа шестерёнка. Слоты
-    /// равны, поэтому «Today N» стоит ровно по центру.
+    /// The width of the footer's side slots: skip on the left, the gear on the
+    /// right. Equal slots keep `Today N` exactly centred.
     public var footerSideWidth = 44.0
-    /// Зазор между словом «Today» и числом.
+    /// The gap between the word `Today` and the number.
     public var counterSpacing = 6.0
     public var background = "#252525"
     public var textSecondary = "#C8C8C8"
@@ -29,31 +29,31 @@ public struct PopoverConfig: Codable, Equatable, Sendable {
     public init() {}
 }
 
-/// Кольцо в центре попапа и всё, что нарисовано внутри него.
+/// The ring at the centre of the popover and everything drawn inside it.
 public struct RingConfig: Codable, Equatable, Sendable {
     public var diameter = 196.0
     public var lineWidth = 4.0
-    /// Ручка на конце дуги. Зона нажатия расширена на её половину наружу —
-    /// иначе видимый кружок торчит за пределы области, которая ловит курсор.
+    /// The handle at the end of the arc. The hit area is widened outwards by
+    /// half of it, or the visible circle sticks out of what catches the cursor.
     public var handleDiameter = 22.0
     public var handleLineWidth = 2.0
     public var trackColor = "#3D3D3D"
-    /// Цвет дуги светлее цвета значка в строке меню — так в оригинале.
+    /// The arc is lighter than the menu bar icon, as in the original.
     public var workColor = "#EC958C"
     public var breakColor = "#8CD3A2"
-    /// Цифры стоят не по центру кольца, а чуть выше: под ними кнопка play.
+    /// The digits sit above the ring's centre: the play button goes below them.
     public var digitsOffset = -9.5
     public var playOffset = 57.75
-    /// Подсказка о пределе — в зазоре между цифрами и кнопкой play.
+    /// The limit hint goes in the gap between the digits and the play button.
     public var hintOffset = 26.0
-    /// Сторона квадрата, в который вписана кнопка play/pause. Всё остальное
-    /// в кнопке — доли от неё, поэтому кнопка меняет размер целиком.
+    /// The side of the square the play/pause button fits into. Everything else
+    /// in the button is a fraction of it, so the button resizes as a whole.
     public var playSide = 34.0
     public var playLineWidth = 1.0
-    /// Ширина треугольника в долях стороны. 0.866 — это √3/2, равносторонний;
-    /// меньше — треугольник вытянется и станет узким.
+    /// The triangle's width as a fraction of the side. 0.866 is √3/2, an
+    /// equilateral one; less than that and it stretches into a narrow sliver.
     public var playTriangleRatio = 0.866
-    /// Пауза: ширина штриха, его высота и зазор между штрихами, в долях стороны.
+    /// Pause: bar width, bar height and the gap between bars, as fractions of the side.
     public var playBarWidthRatio = 0.26
     public var playBarHeightRatio = 0.82
     public var playGapRatio = 0.24

@@ -69,7 +69,7 @@ struct MinutesRow: View {
                     .font(.system(size: metrics.labelSize))
                     .foregroundStyle(.secondary)
             }
-            // Слева от поля, поверх свободного места: ряд не сдвигается.
+            // Left of the field, over the free space, so the row does not move.
             .overlay(alignment: .leading) { [spacing = metrics.rowSpacing] in
                 TransientHint(text: "Max \(Int(limitMinutes)) min", trigger: limitHints)
                     .font(.system(size: metrics.sectionHeaderSize))
@@ -79,6 +79,6 @@ struct MinutesRow: View {
         }
     }
 
-    /// Предел в том виде, в каком его видно в поле: 59:59 показывается как 60.
+    /// The limit as the field shows it: 59:59 reads as 60.
     private var limitMinutes: Double { config.dial.dial.maxMinutes.rounded(.up) }
 }

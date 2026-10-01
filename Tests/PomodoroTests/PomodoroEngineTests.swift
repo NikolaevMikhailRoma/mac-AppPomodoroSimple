@@ -496,8 +496,8 @@ struct ConfigTests {
     @Test("the shipped config.json decodes and its palette names resolve")
     func shippedFile() {
         let c = AppConfig.load()
-        // Значок в строке меню насыщенный, дуга кольца — светлее. Оба имени
-        // взяты из палитры, значит подстановка сработала на живом файле.
+        // The menu bar icon is saturated and the ring arc is lighter. Both names
+        // come from the palette, so substitution worked on the real file.
         #expect(c.menuBar.workColor == "#E62621")
         #expect(c.ring.workColor == "#EC958C")
         #expect(c.icons.menuBar.symbol == "timer")

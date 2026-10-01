@@ -1,5 +1,5 @@
 {
-  "_note": "Значения замерены попиксельно по скриншотам оригинала, а не подобраны на глаз. Любой ключ можно удалить — пропавший ключ сам падает на дефолт из Swift и не роняет остальной файл. Что значит каждое число, написано над соответствующим полем в Sources/PomodoroConfig/*.swift.",
+  "_note": "The values are measured pixel by pixel off screenshots of the original, not eyeballed. Any key may be deleted: a missing key falls back to its Swift default and takes nothing else down with it. What each number means is written above the matching property in Sources/PomodoroConfig/*.swift.",
 
   "palette": {
     "work": "#E62621",

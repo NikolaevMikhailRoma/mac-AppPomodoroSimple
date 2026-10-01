@@ -2,7 +2,7 @@ import AppKit
 
 if Snapshot.runIfRequested() { exit(0) }
 
-// Вторая копия дала бы второй таймер в строке меню.
+// A second copy would put a second timer in the menu bar.
 if let bundleID = Bundle.main.bundleIdentifier,
    NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
        .contains(where: { $0 != .current }) {

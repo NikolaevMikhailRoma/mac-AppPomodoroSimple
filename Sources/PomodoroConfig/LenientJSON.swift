@@ -1,11 +1,11 @@
 import Foundation
 
-/// Значение JSON в том виде, в каком оно лежит в файле.
+/// A JSON value exactly as it sits in the file.
 ///
-/// Нужно ровно для одного: наложить пользовательский `config.json` поверх
-/// дефолтов так, чтобы кривой ключ терял только себя, а не утаскивал за собой
-/// весь файл. Благодаря этому структурам конфига не нужен свой `init(from:)` —
-/// хватает значения в объявлении поля.
+/// It exists for one job: to lay the user's `config.json` over the defaults so
+/// that a broken key loses only itself instead of taking the whole file down.
+/// That is why the config types need no `init(from:)` of their own — a value in
+/// the property declaration is enough.
 enum JSONValue: Codable, Equatable, Sendable {
     case null
     case bool(Bool)
@@ -14,9 +14,9 @@ enum JSONValue: Codable, Equatable, Sendable {
     case array([JSONValue])
     case object([String: JSONValue])
 
-    /// Накладывает `user` на `base`. Объекты сливаются по ключам; значение
-    /// принимается, только если его тип совпал с дефолтным. Поэтому
-    /// `"fontSize": "big"` теряет один ключ, а соседние в той же секции выживают.
+    /// Lays `user` over `base`. Objects merge key by key, and a value is taken
+    /// only when its type matches the default. So `"fontSize": "big"` loses that
+    /// one key while its neighbours in the same section survive.
     static func merged(_ base: JSONValue, _ user: JSONValue) -> JSONValue {
         guard case .object(let b) = base, case .object(let u) = user else {
             return sameKind(base, user) ? user : base
@@ -28,13 +28,13 @@ enum JSONValue: Codable, Equatable, Sendable {
         return .object(out)
     }
 
-    /// Заменяет имена цветов на значения из секции `palette`. Идёт по всему
-    /// дереву, кроме самой секции: строка, совпавшая с ключом палитры, становится
-    /// её значением, остальные остаются как есть — поэтому литерал `#RRGGBB`
-    /// в секции по-прежнему работает.
+    /// Replaces colour names with the values from the `palette` section. It
+    /// walks the whole tree except that section: a string matching a palette key
+    /// becomes its value, everything else is left alone — which is why a literal
+    /// `#RRGGBB` still works anywhere.
     ///
-    /// Отсюда единственное правило палитры: не называй цвет так же, как имя
-    /// шрифта или SF-символа, иначе подменится и оно.
+    /// Hence the one rule of the palette: never name a colour after a font or an
+    /// SF Symbol, or that name gets substituted too.
     static func resolvingPalette(_ root: JSONValue) -> JSONValue {
         guard case .object(let o) = root,
               case .object(let entries)? = o["palette"] else { return root }
@@ -73,7 +73,7 @@ enum JSONValue: Codable, Equatable, Sendable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.singleValueContainer()
-        // Bool раньше Double: JSONDecoder не путает true с 1, но порядок важен.
+        // Bool before Double: JSONDecoder does not confuse true with 1, but the order matters.
         if c.decodeNil() {
             self = .null
         } else if let v = try? c.decode(Bool.self) {

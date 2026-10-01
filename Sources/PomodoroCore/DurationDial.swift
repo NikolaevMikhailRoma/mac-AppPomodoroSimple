@@ -37,15 +37,15 @@ public struct DurationDial: Equatable, Sendable {
     public var minMinutes: Double { minSeconds / 60 }
     public var maxMinutes: Double { maxSeconds / 60 }
 
-    /// Поля настроек — целые минуты, но верхний предел точный: «60» в
-    /// настройках даёт 59:59 на таймере, а не урезается до 59:00.
+    /// Settings fields hold whole minutes, but the upper bound stays exact: 60
+    /// in settings gives 59:59 on the timer instead of being cut to 59:00.
     public func clamp(minutes: Double) -> Double {
         let whole = minutes.rounded()
         return whole * 60 >= maxSeconds ? maxMinutes : max(whole, minMinutes)
     }
 
-    /// Длительности из настроек в пределах регулятора. Нужна для настроек,
-    /// сохранённых до того, как предел стал меньше.
+    /// Stored durations brought back inside the dial's range — for settings
+    /// saved before the upper bound got smaller.
     public func clamp(intervals: IntervalSettings) -> IntervalSettings {
         var clamped = intervals
         clamped.workMinutes = clamp(seconds: intervals.workMinutes * 60) / 60

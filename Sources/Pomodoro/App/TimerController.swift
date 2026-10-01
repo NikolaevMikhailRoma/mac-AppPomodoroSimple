@@ -68,7 +68,7 @@ final class TimerController {
         setDuration(seconds: dial.seconds(forFraction: fraction))
     }
 
-    /// true, если введённое больше предела и таймер встал на предел.
+    /// True when the typed value was over the limit and the timer took the limit.
     @discardableResult
     func setDuration(text: String) -> Bool {
         guard let seconds = TimeFormat.seconds(from: text) else { return false }

@@ -5,10 +5,10 @@ import PomodoroConfig
 
 @MainActor
 final class SettingsWindowController {
-    private let window: NSWindow
+    let window: NSWindow
     private let loginItem: LoginItem
 
-    init(store: SettingsStore, loginItem: LoginItem, config: AppConfig) {
+    init(store: SettingsStore, loginItem: LoginItem, config: AppConfig, tab: SettingsTab = .general) {
         self.loginItem = loginItem
         let metrics = config.settingsWindow
         window = NSWindow(
@@ -21,7 +21,9 @@ final class SettingsWindowController {
         window.isReleasedWhenClosed = false
         window.backgroundColor = Theme.color(metrics.background, fallback: .windowBackgroundColor)
         window.center()
-        window.contentView = NSHostingView(rootView: SettingsView(store: store, loginItem: loginItem, config: config))
+        window.contentView = NSHostingView(
+            rootView: SettingsView(store: store, loginItem: loginItem, config: config, tab: tab)
+        )
     }
 
     func show() {

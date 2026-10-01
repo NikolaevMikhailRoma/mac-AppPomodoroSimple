@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Подсказка, которая появляется и сама гаснет, ничего не требуя от
-/// пользователя. Показать её — увеличить `trigger`; повторный показ
-/// перезапускает отсчёт. Место под текст занято всегда, поэтому соседи не
-/// прыгают, а нажатия проходят сквозь неё.
+/// A hint that appears and fades out on its own, asking nothing of the user.
+/// To show it, raise `trigger`; showing it again restarts the countdown. The
+/// text always holds its space, so neighbours never jump, and clicks pass
+/// straight through it.
 struct TransientHint: View {
     let text: String
     let trigger: Int
