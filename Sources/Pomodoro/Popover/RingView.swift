@@ -30,8 +30,8 @@ struct RingView: View {
                 .rotationEffect(.degrees(turnFraction * 360))
         }
         .frame(width: ring.diameter, height: ring.diameter)
-        // Центр ручки лежит на границе кадра, поэтому её внешняя половина
-        // оказалась бы вне зоны нажатия. Расширяем зону наружу на этот радиус.
+        // The handle is centred on the frame's edge, so its outer half would
+        // fall outside the hit area. Widen that area by the same radius.
         .contentShape(Circle().inset(by: -ring.handleDiameter / 2))
         .gesture(dragGesture)
     }
@@ -43,8 +43,8 @@ struct RingView: View {
                 let raw = Self.turnFraction(of: value.location, around: center)
 
                 guard var current = drag else {
-                    // Нажатие у ручки берёт её как есть, не сдвигая время;
-                    // нажатие в другом месте кольца ставит ручку туда.
+                    // A press near the handle picks it up as it is, leaving the
+                    // time alone; a press elsewhere moves the handle there.
                     if DialDrag.distance(raw, turnFraction) < DialDrag.grabDistance {
                         drag = DialDrag(startingAt: turnFraction)
                     } else {
@@ -61,8 +61,9 @@ struct RingView: View {
             .onEnded { _ in drag = nil }
     }
 
-    /// Угол от центра, отсчитанный от двенадцати часов по часовой стрелке.
-    /// Работает и для точек вне окружности — на этом держится захват за ручку.
+    /// The angle from the centre, measured clockwise from twelve o'clock. It
+    /// works for points outside the circle too, which is what makes grabbing the
+    /// handle possible.
     static func turnFraction(of point: CGPoint, around center: CGPoint) -> Double {
         let dx = point.x - center.x
         let dy = point.y - center.y
@@ -83,8 +84,8 @@ struct PlayTriangle: Shape {
     }
 }
 
-/// Play и pause в одной кнопке. Все размеры внутри — доли от `ring.playSide`,
-/// поэтому кнопка меняется целиком, одним числом в конфиге.
+/// Play and pause in one button. Every size inside is a fraction of
+/// `ring.playSide`, so one number in the config resizes the whole button.
 struct TransportButton: View {
     let isRunning: Bool
     let ring: RingConfig

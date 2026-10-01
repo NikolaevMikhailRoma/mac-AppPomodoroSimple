@@ -2,22 +2,22 @@ import AppKit
 import Observation
 import ServiceManagement
 
-/// «Открывать при входе». Состояние не хранится у нас, а каждый раз читается у
-/// системы: пользователь может выключить приложение в Системных настройках, и
-/// галочка должна это показать.
+/// Open at login. The state is not kept here but read from the system every
+/// time: the user can switch the app off in System Settings, and the checkbox
+/// has to show that.
 @MainActor
 @Observable
 final class LoginItem {
     private(set) var isEnabled = false
-    /// Автозапуск выключен в Системных настройках → Объекты входа. Включить его
-    /// обратно из приложения система не даёт — только оттуда.
+    /// Login at startup is switched off in System Settings → Login Items. The
+    /// system will not let the app switch it back on; only that panel can.
     private(set) var isBlockedBySystem = false
 
     @ObservationIgnored private var activationObserver: NSObjectProtocol?
 
     init() {
         refresh()
-        // Возвращаясь из Системных настроек, пользователь снова активирует нас.
+        // Coming back from System Settings activates us again.
         activationObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didBecomeActiveNotification,
             object: nil,
@@ -41,8 +41,8 @@ final class LoginItem {
                 try SMAppService.mainApp.unregister()
             }
         } catch {
-            // Причину показывает сама галочка: после refresh() она встанет так,
-            // как решила система, а при блокировке появится подсказка.
+            // The checkbox itself shows why: after refresh() it stands where the
+            // system put it, and a hint appears when the system blocks it.
         }
         refresh()
     }

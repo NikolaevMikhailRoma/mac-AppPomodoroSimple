@@ -7,7 +7,14 @@ struct SettingsView: View {
     let loginItem: LoginItem
     let config: AppConfig
 
-    @State private var tab: SettingsTab = .general
+    @State private var tab: SettingsTab
+
+    init(store: SettingsStore, loginItem: LoginItem, config: AppConfig, tab: SettingsTab = .general) {
+        _store = Bindable(wrappedValue: store)
+        self.loginItem = loginItem
+        self.config = config
+        _tab = State(initialValue: tab)
+    }
 
     private var metrics: SettingsWindowConfig { config.settingsWindow }
 
@@ -97,6 +104,11 @@ enum SettingsTab: CaseIterable, Identifiable {
     case general, intervals, sounds
 
     var id: Self { self }
+
+    init?(name: String) {
+        guard let match = Self.allCases.first(where: { String(describing: $0) == name }) else { return nil }
+        self = match
+    }
 
     var title: String {
         switch self {

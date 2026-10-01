@@ -25,7 +25,7 @@ final class StatusItemController: NSObject {
         self.item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
 
-        // Место, куда пользователь перетащил значок с ⌘, переживает перезапуск.
+        // Where the user ⌘-dragged the icon to survives a restart.
         item.autosaveName = "PomodoroTimer"
 
         popover.behavior = .transient

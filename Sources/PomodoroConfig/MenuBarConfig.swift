@@ -1,16 +1,16 @@
 import Foundation
 
-/// Цифры и значок в строке меню. Сам значок описан в `icons.menuBar` — здесь
-/// только то, что зависит от состояния таймера.
+/// The digits and icon in the menu bar. The icon itself is described in
+/// `icons.menuBar`; what lives here is what depends on the timer's state.
 ///
-/// Числа замерены попиксельно на скриншоте, где наше приложение и оригинал стоят
-/// в одной строке меню, — см. `docs/manifest.md` §11.
+/// The numbers are measured pixel by pixel on a screenshot with this app and the
+/// original side by side in one menu bar — see `docs/manifest.md` §11.
 public struct MenuBarConfig: Codable, Equatable, Sendable {
     public var fontSize = 14.0
     public var fontWeight = "regular"
-    /// Моноширинные цифры шире пропорциональных и попадают в оригинал чуть хуже,
-    /// но без них ширина элемента прыгает на каждой секунде и соседние значки
-    /// в строке меню ездят. Обмен сознательный.
+    /// Monospaced digits are wider than proportional ones and match the original
+    /// slightly worse, but without them the item's width jumps every second and
+    /// the neighbouring menu bar icons shift about. A deliberate trade.
     public var monospacedDigits = true
     public var workColor = "#E62621"
     public var breakColor = "#30A46C"

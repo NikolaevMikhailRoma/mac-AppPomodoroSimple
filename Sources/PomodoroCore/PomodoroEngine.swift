@@ -67,9 +67,9 @@ public struct PomodoroEngine: Equatable, Sendable {
         remaining = phaseDuration
     }
 
-    /// Работа засчитывается даже досрочно или вовсе не запущенная: так
-    /// пользователь добавляет интервал, отработанный без таймера. Бросить
-    /// работу без засчёта — это stop().
+    /// Work counts even when finished early, or never started at all: this is
+    /// how the user adds an interval worked without the timer. Dropping work
+    /// without counting it is stop().
     public mutating func skip(now: Date = Date()) -> [EngineEvent] {
         advance(countingCompletion: true, now: now)
     }
