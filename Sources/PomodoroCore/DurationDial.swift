@@ -9,7 +9,7 @@ public struct DurationDial: Equatable, Sendable {
     public init(
         fullTurnMinutes: Double = 60,
         minSeconds: Double = 10,
-        maxSeconds: Double = 10_800,
+        maxSeconds: Double = 3_599,
         dragStepSeconds: Double = 5
     ) {
         self.fullTurnMinutes = max(1, fullTurnMinutes)
@@ -37,7 +37,20 @@ public struct DurationDial: Equatable, Sendable {
     public var minMinutes: Double { minSeconds / 60 }
     public var maxMinutes: Double { maxSeconds / 60 }
 
+    /// Settings fields hold whole minutes, but the upper bound stays exact: 60
+    /// in settings gives 59:59 on the timer instead of being cut to 59:00.
     public func clamp(minutes: Double) -> Double {
-        clamp(seconds: minutes * 60) / 60
+        let whole = minutes.rounded()
+        return whole * 60 >= maxSeconds ? maxMinutes : max(whole, minMinutes)
+    }
+
+    /// Stored durations brought back inside the dial's range — for settings
+    /// saved before the upper bound got smaller.
+    public func clamp(intervals: IntervalSettings) -> IntervalSettings {
+        var clamped = intervals
+        clamped.workMinutes = clamp(seconds: intervals.workMinutes * 60) / 60
+        clamped.shortBreakMinutes = clamp(seconds: intervals.shortBreakMinutes * 60) / 60
+        clamped.longBreakMinutes = clamp(seconds: intervals.longBreakMinutes * 60) / 60
+        return clamped
     }
 }

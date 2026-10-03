@@ -67,8 +67,11 @@ public struct PomodoroEngine: Equatable, Sendable {
         remaining = phaseDuration
     }
 
+    /// Work counts even when finished early, or never started at all: this is
+    /// how the user adds an interval worked without the timer. Dropping work
+    /// without counting it is stop().
     public mutating func skip(now: Date = Date()) -> [EngineEvent] {
-        advance(countingCompletion: false, now: now)
+        advance(countingCompletion: true, now: now)
     }
 
     public mutating func setPhaseDuration(_ seconds: TimeInterval, now: Date = Date()) {

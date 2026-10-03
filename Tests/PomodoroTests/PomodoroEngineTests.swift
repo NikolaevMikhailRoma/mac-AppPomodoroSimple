@@ -154,14 +154,36 @@ struct TransitionTests {
         #expect(e.remaining == 4 * 60)
     }
 
-    @Test("skipping does not count as a completed interval")
-    func skipDoesNotCount() {
+    @Test("finishing work early counts it, even if the timer never ran")
+    func skipWorkCounts() {
         var e = engine()
         e.start(now: t0)
         let events = e.skip(now: t0.addingTimeInterval(60))
         #expect(events == [.phaseFinished(.work), .phaseStarted(.shortBreak)])
-        #expect(e.completedToday == 0)
+        #expect(e.completedToday == 1)
         #expect(e.phase == .shortBreak)
+
+        var forgotten = engine()
+        _ = forgotten.skip(now: t0)
+        #expect(forgotten.completedToday == 1)
+    }
+
+    @Test("skipping a break counts nothing")
+    func skipBreakDoesNotCount() {
+        var e = engine()
+        _ = e.skip(now: t0)
+        _ = e.skip(now: t0)
+        #expect(e.phase == .work)
+        #expect(e.completedToday == 1)
+    }
+
+    @Test("work finished by hand leads to the long break like a timed one")
+    func skippedWorkReachesLongBreak() {
+        var e = engine(longAfter: 2)
+        _ = e.skip(now: t0)   // work 1 → short break
+        _ = e.skip(now: t0)   // → work
+        _ = e.skip(now: t0)   // work 2 → long break
+        #expect(e.phase == .longBreak)
     }
 
     @Test("a break ends back at work")
@@ -313,6 +335,78 @@ struct DialTests {
         #expect(dial.maxMinutes == 180)
         #expect(abs(dial.minMinutes - 10.0 / 60.0) < 0.0001)
     }
+
+    @Test("the default limit is 59:59, and 60 minutes in settings reach it")
+    func underAnHour() {
+        let dial = DurationDial()
+        #expect(dial.clamp(seconds: 60 * 60) == 3_599)
+        #expect(TimeFormat.string(from: dial.clamp(seconds: 99_999)) == "59:59")
+        #expect(TimeFormat.string(from: dial.clamp(minutes: 60) * 60) == "59:59")
+        #expect(TimeFormat.string(from: dial.clamp(minutes: 90) * 60) == "59:59")
+        #expect(dial.clamp(minutes: 59) == 59)
+        // The stepper steps down from 59.98 to 58.98 — that lands on 59, not 58:59.
+        #expect(dial.clamp(minutes: dial.maxMinutes - 1) == 59)
+    }
+
+    @Test("stored intervals over the limit are pulled back under it")
+    func clampsStoredIntervals() {
+        let dial = DurationDial()
+        let stored = IntervalSettings(workMinutes: 90, shortBreakMinutes: 5, longBreakMinutes: 75, longBreakAfter: 3)
+        let clamped = dial.clamp(intervals: stored)
+        #expect(TimeFormat.string(from: clamped.duration(for: .work)) == "59:59")
+        #expect(clamped.shortBreakMinutes == 5)
+        #expect(TimeFormat.string(from: clamped.duration(for: .longBreak)) == "59:59")
+        #expect(clamped.longBreakAfter == 3)
+    }
+}
+
+@Suite("Dragging the ring")
+struct DialDragTests {
+
+    @Test("the handle follows the cursor around the ring")
+    func follows() {
+        var d = DialDrag(startingAt: 0.25)
+        #expect(d.move(to: 0.3) == 0.3)
+        #expect(d.move(to: 0.2) == 0.2)
+    }
+
+    @Test("going back past twelve o'clock stops at zero instead of jumping to 59:55")
+    func stopsAtZero() {
+        var d = DialDrag(startingAt: 0.02)
+        #expect(d.move(to: 0.001) == 0.001)
+        #expect(d.move(to: 0.98) == 0)
+        #expect(d.move(to: 0.7) == 0)
+        // Circling round the bottom does not drag the handle along.
+        #expect(d.move(to: 0.45) == 0)
+        #expect(d.move(to: 0.2) == 0)
+    }
+
+    @Test("going forward past twelve o'clock stops at a full turn instead of jumping to 00:05")
+    func stopsAtFullTurn() {
+        var d = DialDrag(startingAt: 0.97)
+        #expect(d.move(to: 0.02) == 1)
+        #expect(d.move(to: 0.3) == 1)
+    }
+
+    @Test("a stopped handle is picked up again when the cursor comes back to it")
+    func releases() {
+        var d = DialDrag(startingAt: 0.02)
+        _ = d.move(to: 0.95)
+        #expect(d.move(to: 0.97) == 0)   // still on the wrong side
+        #expect(d.move(to: 0.03) == 0.03)
+        #expect(d.move(to: 0.1) == 0.1)
+
+        var full = DialDrag(startingAt: 0.98)
+        _ = full.move(to: 0.1)
+        #expect(full.move(to: 0.97) == 0.97)
+    }
+
+    @Test("distance is measured around the circle")
+    func circularDistance() {
+        #expect(abs(DialDrag.distance(0.98, 0.02) - 0.04) < 1e-9)
+        #expect(abs(DialDrag.distance(0.2, 0.5) - 0.3) < 1e-9)
+        #expect(DialDrag.distance(1, 0) < 1e-9)
+    }
 }
 
 @Suite("Config loading")
@@ -402,8 +496,8 @@ struct ConfigTests {
     @Test("the shipped config.json decodes and its palette names resolve")
     func shippedFile() {
         let c = AppConfig.load()
-        // Значок в строке меню насыщенный, дуга кольца — светлее. Оба имени
-        // взяты из палитры, значит подстановка сработала на живом файле.
+        // The menu bar icon is saturated and the ring arc is lighter. Both names
+        // come from the palette, so substitution worked on the real file.
         #expect(c.menuBar.workColor == "#E62621")
         #expect(c.ring.workColor == "#EC958C")
         #expect(c.icons.menuBar.symbol == "timer")

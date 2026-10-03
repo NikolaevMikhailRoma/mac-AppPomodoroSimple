@@ -1,6 +1,6 @@
 import Foundation
 
-// Reads app.json and writes CFBundleName/CFBundleExecutable/CFBundleShortVersionString/
+// Reads app.json and writes CFBundleName/CFBundleExecutable/CFBundleShortVersionString/CFBundleVersion/
 // CFBundleIdentifier into an Info.plist. Usage: swift apply-config.swift <app.json> <Info.plist>
 
 let args = CommandLine.arguments
@@ -29,6 +29,7 @@ guard var plist = try PropertyListSerialization.propertyList(from: plistData, op
 plist["CFBundleName"] = name
 plist["CFBundleExecutable"] = name
 plist["CFBundleShortVersionString"] = version
+plist["CFBundleVersion"] = version
 plist["CFBundleIdentifier"] = bundleID
 
 let outData = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)

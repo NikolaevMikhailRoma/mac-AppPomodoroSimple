@@ -1,18 +1,18 @@
 import Foundation
 import PomodoroCore
 
-/// Форма `config.json`.
+/// The shape of `config.json`.
 ///
-/// Дефолт каждого значения стоит прямо в объявлении поля — второго места, где
-/// его нужно повторить, нет. Мягкость разбора обеспечивает `JSONValue.merged`:
-/// пропущенный или кривой по типу ключ теряет только себя.
+/// Every default sits in the property declaration itself; there is no second
+/// place to repeat it. `JSONValue.merged` keeps parsing lenient: a missing key,
+/// or one with the wrong type, loses only itself.
 ///
-/// Добавить значение = поле здесь + строка в `Resources/config.json`.
+/// Adding a value = a property here + a line in `Resources/config.json`.
 public struct AppConfig: Codable, Equatable, Sendable {
-    /// Именованные цвета. Любое поле-цвет в остальных секциях можно задать либо
-    /// именем отсюда, либо литералом `#RRGGBB` — см. `JSONValue.resolvingPalette`.
+    /// Named colours. Every colour field in the other sections takes either a
+    /// name from here or a literal `#RRGGBB` — see `JSONValue.resolvingPalette`.
     public var palette = Palette.defaults
-    /// Все значки приложения. Это системные SF Symbols, файлов картинок нет.
+    /// Every icon in the app. These are system SF Symbols; there are no image files.
     public var icons = IconsConfig()
     public var menuBar = MenuBarConfig()
     public var popover = PopoverConfig()
@@ -20,13 +20,13 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public var fonts = FontsConfig()
     public var settingsWindow = SettingsWindowConfig()
     public var dial = DialConfig()
-    /// Длительности на первом запуске, пока пользователь не поменял их в настройках.
+    /// Durations for the first launch, until the user changes them in settings.
     public var intervals = IntervalSettings()
 
     public init() {}
 
-    /// Разбирает файл, накладывая его на дефолты и раскрывая имена палитры.
-    /// Файл не читается вовсе — возвращаются дефолты целиком.
+    /// Parses the file over the defaults and resolves palette names. An
+    /// unreadable file gives the defaults whole.
     public static func decode(_ data: Data) -> AppConfig {
         let fallback = AppConfig()
         guard let baseData = try? JSONEncoder().encode(fallback),
@@ -40,7 +40,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
         return config
     }
 
-    /// `config.json` лежит ресурсом этого таргета, поэтому `Bundle.module` — здешний.
+    /// `config.json` ships as a resource of this target, so `Bundle.module` is ours.
     public static func load() -> AppConfig {
         guard let url = Bundle.module.url(forResource: "config", withExtension: "json"),
               let data = try? Data(contentsOf: url) else { return AppConfig() }
@@ -48,24 +48,24 @@ public struct AppConfig: Codable, Equatable, Sendable {
     }
 }
 
-/// Палитра — обычный словарь, поэтому новый цвет добавляется одной строкой в
-/// JSON и не требует правки Swift. Дефолты здесь нужны, чтобы приложение имело
-/// полный набор цветов даже без файла.
+/// The palette is a plain dictionary, so a new colour is one line of JSON and
+/// no Swift at all. The defaults here give the app a full set of colours even
+/// with no file.
 public enum Palette {
     public static let defaults: [String: String] = [
-        // Цвет фазы. Значок в строке меню насыщенный, дуга кольца — светлее:
-        // так в оригинале, это не производные друг от друга значения.
+        // Phase colours. The menu bar icon is saturated and the ring arc is
+        // lighter, as in the original; neither is derived from the other.
         "work": "#E62621",
         "workSoft": "#EC958C",
         "break": "#30A46C",
         "breakSoft": "#8CD3A2",
-        // Таймер стоит.
+        // Timer stopped.
         "idle": "#9B9B9B",
     ]
 }
 
-/// Значок: имя системного символа, кегль и вес. Одна структура на все три
-/// применения — строка меню, шестерёнка, крестик.
+/// An icon: system symbol name, size and weight. One type for every use —
+/// menu bar, gear, skip, close.
 public struct IconConfig: Codable, Equatable, Sendable {
     public var symbol: String
     public var size: Double
@@ -79,17 +79,19 @@ public struct IconConfig: Codable, Equatable, Sendable {
 }
 
 public struct IconsConfig: Codable, Equatable, Sendable {
-    /// Строка меню. Вес замерен по оригиналу: у regular штрих на пиксель толще.
+    /// Menu bar. The weight is measured off the original: regular is a pixel thicker.
     public var menuBar = IconConfig(symbol: "timer", size: 15, weight: "light")
-    /// Шестерёнка в подвале попапа.
+    /// The gear in the popover footer.
     public var settings = IconConfig(symbol: "gearshape", size: 18, weight: "ultralight")
-    /// Крестик в шапке попапа: останавливает таймер и сбрасывает его к началу фазы.
+    /// Left of the popover footer, opposite the gear: straight to the next interval.
+    public var skip = IconConfig(symbol: "forward.end", size: 18, weight: "ultralight")
+    /// The cross in the popover header: stops the timer and resets the phase.
     public var reset = IconConfig(symbol: "xmark.circle", size: 22, weight: "ultralight")
 
     public init() {}
 }
 
-/// Шрифт как его задаёт конфиг: PostScript-имя и кегль.
+/// A font as the config states it: PostScript name and size.
 public struct FontToken: Codable, Equatable, Sendable {
     public var name: String
     public var size: Double
@@ -100,27 +102,29 @@ public struct FontToken: Codable, Equatable, Sendable {
     }
 }
 
-/// Шрифты попапа. Строка меню и окно настроек берут системный шрифт и задают
-/// только кегль — им отдельные записи не нужны.
+/// Popover fonts. The menu bar and the settings window take the system font
+/// and set only a size, so they need no entries of their own.
 public struct FontsConfig: Codable, Equatable, Sendable {
-    /// Крупные цифры в центре кольца.
     public var digits = FontToken(name: "HelveticaNeue-Thin", size: 55)
-    /// «Today N» в подвале.
+    /// `Today N` in the footer.
     public var counter = FontToken(name: "HelveticaNeue-Light", size: 20)
-    /// Название фазы в шапке.
+    /// `Max 59:59` under the digits when the typed value is over the limit.
+    public var hint = FontToken(name: "HelveticaNeue-Light", size: 13)
+    /// The phase name in the header.
     public var phase = FontToken(name: "HelveticaNeue-Light", size: 15)
 
     public init() {}
 }
 
-/// Пределы и шаг круглого регулятора времени.
+/// The range and step of the round time dial.
 public struct DialConfig: Codable, Equatable, Sendable {
-    /// Сколько минут укладывается в полный оборот кольца.
     public var fullTurnMinutes = 60.0
     public var minSeconds = 1.0
-    public var maxSeconds = 10_800.0
-    /// Шаг перетаскивания. Одна точка дуги ≈ 5.8 секунды, поэтому мельче 5
-    /// значение перестаёт быть повторяемым. Ввод с клавиатуры не округляется.
+    /// 59:59. An hour and over reads as 1:00:00 — one character wider, and the
+    /// digits stop fitting inside the ring.
+    public var maxSeconds = 3_599.0
+    /// The drag step. One point of arc is about 5.8 seconds, so anything finer
+    /// than 5 stops being repeatable. Typed input is not rounded.
     public var dragStepSeconds = 5.0
 
     public init() {}

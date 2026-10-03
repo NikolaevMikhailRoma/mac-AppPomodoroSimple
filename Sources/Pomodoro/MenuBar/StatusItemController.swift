@@ -25,6 +25,9 @@ final class StatusItemController: NSObject {
         self.item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
 
+        // Where the user ⌘-dragged the icon to survives a restart.
+        item.autosaveName = "PomodoroTimer"
+
         popover.behavior = .transient
         popover.animates = false
         popover.contentSize = NSSize(
@@ -112,7 +115,7 @@ final class StatusItemController: NSObject {
         popover.performClose(nil)
 
         let menu = NSMenu()
-        menu.addItem(menuItem("Skip interval", #selector(skipInterval)))
+        menu.addItem(menuItem(timer.skipTitle, #selector(skipInterval)))
         menu.addItem(.separator())
         menu.addItem(menuItem("Settings…", #selector(showSettings)))
         menu.addItem(menuItem("Quit Pomodoro", #selector(quit)))

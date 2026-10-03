@@ -29,8 +29,8 @@ enum Theme {
         return Font(nsFont)
     }
 
-    /// Имя веса из конфига в NSFont.Weight. Одна таблица на шрифты и на значки —
-    /// SF Symbols берут вес того же типа.
+    /// A weight name from the config as an NSFont.Weight. One table for fonts
+    /// and icons alike — SF Symbols take a weight of the same type.
     static func weight(named name: String) -> NSFont.Weight {
         switch name.lowercased() {
         case "ultralight": return .ultraLight
@@ -44,8 +44,9 @@ enum Theme {
         }
     }
 
-    /// То же для SwiftUI — у него свой тип веса. Таблицы обязаны совпадать,
-    /// иначе один ключ конфига даст разную толщину в строке меню и в попапе.
+    /// The same for SwiftUI, which has a weight type of its own. The two tables
+    /// must agree, or one config key gives different weights in the menu bar and
+    /// in the popover.
     static func fontWeight(named name: String) -> Font.Weight {
         switch name.lowercased() {
         case "ultralight": return .ultraLight
@@ -59,17 +60,17 @@ enum Theme {
         }
     }
 
-    /// Значок для SwiftUI. Размер и вес — из конфига, цвет задаёт место вызова:
-    /// он зависит от фазы, а не от значка.
+    /// An icon for SwiftUI. Size and weight come from the config; the colour is
+    /// set by the caller, because it follows the phase, not the icon.
     static func icon(_ icon: IconConfig, color: Color) -> some View {
         Image(systemName: icon.symbol)
             .font(.system(size: icon.size, weight: fontWeight(named: icon.weight)))
             .foregroundStyle(color)
     }
 
-    /// Тот же значок для AppKit: строка меню рисует NSImage, а не View.
-    /// `isTemplate = false` обязателен, иначе система перекрасит символ сама
-    /// и palette-цвет будет проигнорирован.
+    /// The same icon for AppKit: the menu bar draws an NSImage, not a View.
+    /// `isTemplate = false` is required, or the system recolours the symbol
+    /// itself and the palette colour is ignored.
     static func image(_ icon: IconConfig, color: NSColor) -> NSImage? {
         let image = NSImage(systemSymbolName: icon.symbol, accessibilityDescription: "Pomodoro")
         image?.isTemplate = false
