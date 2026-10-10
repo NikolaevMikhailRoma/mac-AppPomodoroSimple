@@ -6,4 +6,11 @@
 
 ## 0.1.1
 
-First public release.
+- Fixed: a second copy of the app no longer starts next to the running one.
+- Skip button counts the skipped work interval.
+- Durations are capped at 59:59, with a hint when the typed value is over it.
+- The ring handle stops at 12 o'clock instead of wrapping around.
+
+## 0.1.0
+
+First release.
