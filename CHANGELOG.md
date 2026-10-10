@@ -1,16 +1,27 @@
 # Changelog
 
-## 0.1.2 — unreleased
+All notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-- Fixed: the app crashed on launch on any Mac other than the one it was built on. `config.json` is now looked up in `Contents/Resources` of the app instead of through `Bundle.module`.
+## [Unreleased]
 
-## 0.1.1
+### Fixed
+- The app no longer crashes on launch on a Mac other than the one it was built on.
 
-- Fixed: a second copy of the app no longer starts next to the running one.
-- Skip button counts the skipped work interval.
-- Durations are capped at 59:59, with a hint when the typed value is over it.
+## [0.1.1] — 2026-10-04
+
+### Changed
+- Skipping a work interval counts it.
+- Durations are capped at 59:59, with a hint when the typed value is over the limit.
 - The ring handle stops at 12 o'clock instead of wrapping around.
 
-## 0.1.0
+### Fixed
+- A second copy of the app no longer starts next to the running one.
 
-First release.
+## [0.1.0] — 2026-08-31
+
+### Added
+- First release: menu bar timer with a popover ring, work and break intervals, settings window.
+
+[Unreleased]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases/tag/v0.1.0
