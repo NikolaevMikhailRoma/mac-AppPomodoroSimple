@@ -4,7 +4,4 @@
 *.app/
 *.app.zip
 
-# Working notes, design references and screenshots — not part of the app.
-docs/
-
 .DS_Store

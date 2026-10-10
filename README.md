@@ -1,5 +1,11 @@
 # Pomodoro
 
+![macOS 15+](https://img.shields.io/badge/macOS-15%2B-black?logo=apple)
+![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
+[![License](https://img.shields.io/github/license/NikolaevMikhailRoma/mac-AppPomodoroSimple)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/NikolaevMikhailRoma/mac-AppPomodoroSimple)](https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/NikolaevMikhailRoma/mac-AppPomodoroSimple/total)](https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases)
+
 ![Menu bar and timer](assets/popover.png)
 
 A minimal native macOS menu bar pomodoro timer: red while working, green on a
@@ -42,6 +48,14 @@ open Pomodoro.app
 Run the unit tests with `swift test` (pure logic lives in the `PomodoroCore` and
 `PomodoroConfig` targets). Every colour, size and icon is in
 [`config.json`](Sources/PomodoroConfig/Resources/config.json), not in the code.
+
+## Version history
+
+What changed in each version: [CHANGELOG.md](CHANGELOG.md).
+
+- **0.1.2** — fixed a crash on launch on another Mac.
+- **0.1.1** — ▷| counts a skipped work interval, 59:59 limit with hints, a second copy no longer starts.
+- **0.1.0** — first release: menu bar timer, ring, settings, sounds and notifications.
 
 ## License
 

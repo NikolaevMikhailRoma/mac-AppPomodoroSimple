@@ -40,13 +40,33 @@ public struct AppConfig: Codable, Equatable, Sendable {
         return config
     }
 
-    /// `config.json` ships as a resource of this target, so `Bundle.module` is ours.
+    /// `config.json` ships as a resource of this target. A missing file gives the defaults.
     public static func load() -> AppConfig {
-        guard let url = Bundle.module.url(forResource: "config", withExtension: "json"),
+        guard let url = resourceBundle?.url(forResource: "config", withExtension: "json"),
               let data = try? Data(contentsOf: url) else { return AppConfig() }
         return decode(data)
     }
+
+    /// Not `Bundle.module`: it looks in the root of the `.app`, where the
+    /// signature won't let the bundle sit, then in the build machine's `.build`,
+    /// and otherwise calls `fatalError`. So the app worked only where it was built.
+    ///
+    /// Looked for in `Contents/Resources` of the `.app`, next to the executable
+    /// (`swift run`) and next to the test bundle (`swift test`).
+    private static let resourceBundle: Bundle? = {
+        let name = "Pomodoro_PomodoroConfig.bundle"
+        let places = [
+            Bundle.main.resourceURL,
+            Bundle.main.bundleURL,
+            Bundle(for: BundleToken.self).bundleURL.deletingLastPathComponent(),
+        ]
+        return places.lazy
+            .compactMap { $0.flatMap { Bundle(url: $0.appendingPathComponent(name)) } }
+            .first
+    }()
 }
+
+private final class BundleToken {}
 
 /// The palette is a plain dictionary, so a new colour is one line of JSON and
 /// no Swift at all. The defaults here give the app a full set of colours even
