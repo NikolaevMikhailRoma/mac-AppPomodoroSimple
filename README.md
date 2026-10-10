@@ -53,6 +53,7 @@ Run the unit tests with `swift test` (pure logic lives in the `PomodoroCore` and
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
+- **0.1.2** — fixed a crash on launch on another Mac.
 - **0.1.1** — ▷| counts a skipped work interval, 59:59 limit with hints, a second copy no longer starts.
 - **0.1.0** — first release: menu bar timer, ring, settings, sounds and notifications.
 

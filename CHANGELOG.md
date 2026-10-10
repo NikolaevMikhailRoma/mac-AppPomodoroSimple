@@ -2,7 +2,7 @@
 
 All notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.1.2] — 2026-10-10
 
 ### Fixed
 - The app no longer crashes on launch on a Mac other than the one it was built on.
@@ -22,6 +22,6 @@ All notable changes, newest first. The format follows [Keep a Changelog](https:/
 ### Added
 - First release: menu bar timer with a popover ring, work and break intervals, settings window.
 
-[Unreleased]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.1.1...HEAD
+[0.1.2]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases/tag/v0.1.0
