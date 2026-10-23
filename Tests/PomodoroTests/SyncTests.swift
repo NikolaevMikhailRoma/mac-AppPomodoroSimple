@@ -130,6 +130,12 @@ struct SyncWireTests {
         let shifted = s.shifted(by: (v["receivedAt"] as! Double) - (v["sentAt"] as! Double))
         #expect(shifted.endsAt == Date(timeIntervalSince1970: local["endsAt"]!))
         #expect(shifted.changedAt == Date(timeIntervalSince1970: local["changedAt"]!))
+
+        let untouched = section("shiftUntouched")
+        s.changedAt = Date(timeIntervalSince1970: 0)
+        let offset = (untouched["receivedAt"] as! Double) - (untouched["sentAt"] as! Double)
+        #expect(s.shifted(by: offset).changedAt == Date(timeIntervalSince1970: 0))
+        #expect(SyncRules.shifted(Date(timeIntervalSince1970: 0), by: offset) == Date(timeIntervalSince1970: 0))
     }
 
     @Test("the later change wins, and the Mac within a second")

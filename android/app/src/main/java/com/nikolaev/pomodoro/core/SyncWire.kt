@@ -80,11 +80,14 @@ fun EngineState.Companion.fromWire(o: JSONObject?): EngineState? {
 
 /** Moves the sender's times onto the receiver's clock. */
 fun EngineState.shifted(offset: Double): EngineState =
-    copy(endsAt = endsAt?.plus(offset), changedAt = changedAt + offset)
+    copy(endsAt = endsAt?.plus(offset), changedAt = SyncRules.shifted(changedAt, offset))
 
 object SyncRules {
     /** Changes closer than this count as simultaneous, and the Mac wins. */
     const val TIE_WINDOW = 1.0
+
+    /** A change time on the receiver's clock. 0 stays 0: "never changed". */
+    fun shifted(changedAt: Double, offset: Double): Double = if (changedAt == 0.0) 0.0 else changedAt + offset
 
     /**
      * Whether the receiver takes the other device's state. Both times are on the

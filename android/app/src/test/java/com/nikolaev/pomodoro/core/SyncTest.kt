@@ -123,6 +123,11 @@ class SyncWireTest {
         val shifted = s.shifted(v.getDouble("receivedAt") - v.getDouble("sentAt"))
         assertEquals(local.getDouble("endsAt"), shifted.endsAt!!, 0.0)
         assertEquals(local.getDouble("changedAt"), shifted.changedAt, 0.0)
+
+        val untouched = vectors.getJSONObject("shiftUntouched")
+        val offset = untouched.getDouble("receivedAt") - untouched.getDouble("sentAt")
+        assertEquals(0.0, s.copy(changedAt = 0.0).shifted(offset).changedAt, 0.0)
+        assertEquals(0.0, SyncRules.shifted(0.0, offset), 0.0)
     }
 
     @Test

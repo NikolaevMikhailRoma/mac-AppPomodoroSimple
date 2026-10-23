@@ -126,7 +126,8 @@ Encrypted frames carry JSON.
 
 The receiver moves the remote times onto its own clock first:
 `offset = received at − sentAt`, added to `endsAt` and `changedAt`. The error
-is the network delay, milliseconds at home.
+is the network delay, milliseconds at home. A `changedAt` of 0 stays 0: it
+means "never changed", not a moment in 1970.
 
 Then the later change wins. Within 1 second the Mac wins: when an interval
 runs out on both devices, the phone takes the Mac's next interval.

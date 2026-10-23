@@ -108,7 +108,7 @@ extension EngineState {
     public func shifted(by offset: TimeInterval) -> EngineState {
         var s = self
         s.endsAt = endsAt?.addingTimeInterval(offset)
-        s.changedAt = changedAt.addingTimeInterval(offset)
+        s.changedAt = SyncRules.shifted(changedAt, by: offset)
         return s
     }
 
@@ -122,6 +122,11 @@ extension EngineState {
 public enum SyncRules {
     /// Changes closer than this count as simultaneous, and the Mac wins.
     public static let tieWindow: TimeInterval = 1
+
+    /// A change time on the receiver's clock. 0 stays 0: "never changed".
+    public static func shifted(_ changedAt: Date, by offset: TimeInterval) -> Date {
+        changedAt == Date(timeIntervalSince1970: 0) ? changedAt : changedAt.addingTimeInterval(offset)
+    }
 
     /// Whether the receiver takes the other device's state. Both times are on
     /// the receiver's clock. A state nobody changed (time 0) always loses, and

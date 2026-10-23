@@ -171,5 +171,15 @@
       "adopt": true,
       "why": "two untouched states: the Mac takes the phone's, with its count"
     }
-  ]
+  ],
+  "shiftUntouched": {
+    "sentAt": 1000.0,
+    "receivedAt": 1003.5,
+    "remote": {
+      "changedAt": 0
+    },
+    "local": {
+      "changedAt": 0
+    }
+  }
 }
