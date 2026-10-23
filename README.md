@@ -8,6 +8,10 @@
 [![Release](https://img.shields.io/github/v/release/NikolaevMikhailRoma/mac-AppPomodoroSimple)](https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/NikolaevMikhailRoma/mac-AppPomodoroSimple/total)](https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases)
 
+# (experimental)
+- added android app
+- linked mac and android app, by local network and keychain
+
 # macOS
 ![Menu bar and timer](assets/popover.png)
 
@@ -58,6 +62,7 @@ The same timer on Android 8 and newer. Tested on a Motorola Edge 50 with Android
 
 <p>
   <img src="assets/android-timer.png" width="270" alt="Android timer">
+  <img src="assets/android-settings.png" width="270" alt="Android settings">
 </p>
 
 ## Run the app (users)

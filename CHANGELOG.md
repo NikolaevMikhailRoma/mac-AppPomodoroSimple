@@ -2,6 +2,13 @@
 
 All notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — experimental
+
+Not released yet; goes out together with the iPhone app.
+
+### Added
+- Mac and Android sync over the home Wi-Fi: one timer and the same interval lengths on both, paired once with a QR code (Settings → Devices).
+
 ## [0.2.0] — 2026-10-23
 
 ### Added
