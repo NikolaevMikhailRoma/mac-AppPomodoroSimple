@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The timer ring on the popover background; adaptive icons keep the middle 66 of 108. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#00000000" android:strokeColor="#3D3D3D" android:strokeWidth="2.6"
+        android:pathData="M54,30 A24,24 0 1,1 53.99,30" />
+    <path android:fillColor="#00000000" android:strokeColor="#EC958C" android:strokeWidth="2.6"
+        android:pathData="M54,30 A24,24 0 1,1 30,54" />
+    <path android:fillColor="#252525" android:strokeColor="#EC958C" android:strokeWidth="1.6"
+        android:pathData="M30,49.2 A4.8,4.8 0 1,1 29.99,49.2 Z" />
+</vector>

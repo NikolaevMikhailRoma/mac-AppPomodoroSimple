@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status bar icon during a break: a cup. Android draws it in one colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M4,9h12v4.5a5.5,5.5 0 0 1 -5.5,5.5h-1a5.5,5.5 0 0 1 -5.5,-5.5z" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.8"
+        android:pathData="M16,10.5h1.5a2.25,2.25 0 0 1 0,4.5H15.5" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.5"
+        android:strokeLineCap="round" android:pathData="M8,3.5v3 M12,3.5v3" />
+</vector>
