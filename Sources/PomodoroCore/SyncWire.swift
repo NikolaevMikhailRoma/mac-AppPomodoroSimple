@@ -173,11 +173,12 @@ public enum SyncRules {
     /// Whether the receiver takes the other device's state. Both times are on
     /// the receiver's clock. A state nobody changed (time 0) always loses, and
     /// of two such states the phone's wins: it kept its timer, the Mac did not.
-    public static func shouldAdopt(local: Date, remote: Date, receiverIsMac: Bool) -> Bool {
+    /// `localAdopted`: the Mac's current state came from a phone, so the tie
+    /// window (for changes on both devices at once) does not apply.
+    public static func shouldAdopt(local: Date, remote: Date, receiverIsMac: Bool, localAdopted: Bool = false) -> Bool {
         let never = Date(timeIntervalSince1970: 0)
-        return receiverIsMac
-            ? local == never || remote.timeIntervalSince(local) > tieWindow
-            : remote != never && remote.timeIntervalSince(local) >= -tieWindow
+        guard receiverIsMac else { return remote != never && remote.timeIntervalSince(local) >= -tieWindow }
+        return local == never || remote.timeIntervalSince(local) > (localAdopted ? 0 : tieWindow)
     }
 
     /// The same for interval settings, except that defaults (time 0) never

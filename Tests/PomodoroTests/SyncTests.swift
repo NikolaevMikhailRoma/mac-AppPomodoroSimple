@@ -144,7 +144,8 @@ struct SyncWireTests {
             let adopt = SyncRules.shouldAdopt(
                 local: Date(timeIntervalSince1970: m["local"] as! Double),
                 remote: Date(timeIntervalSince1970: m["remote"] as! Double),
-                receiverIsMac: m["receiver"] as! String == "mac"
+                receiverIsMac: m["receiver"] as! String == "mac",
+                localAdopted: m["localAdopted"] as? Bool ?? false
             )
             #expect(adopt == m["adopt"] as! Bool, "\(m["why"]!)")
         }

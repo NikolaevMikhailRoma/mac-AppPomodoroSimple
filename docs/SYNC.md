@@ -151,12 +151,16 @@ it, together with the day's count.
   `remote.changedAt ≥ local.changedAt − 1`.
 - The Mac takes it if `local.changedAt = 0` or
   `remote.changedAt > local.changedAt + 1`.
+- The 1-second window is for changes made on both devices at once. When the
+  Mac's current state is one it took from a phone, any later state wins:
+  `remote.changedAt > local.changedAt`. Dragging the ring on the phone sends
+  a new state every 0.1 seconds, and each must reach the Mac.
 
 Taking a state plays no sound and posts no notification. A device sends its
 state whenever its `changedAt` differs from the last one it sent or took,
-at most every 0.25 seconds and always the newest: dragging the ring changes
-the state with every mouse move. The Mac sends to every connected phone, the
-phone to the Mac.
+at most every 0.1 seconds and always the newest: dragging the ring changes
+the state with every mouse move. The Mac sends to every connected phone except
+the one the state came from, the phone to the Mac.
 
 ## Interval settings
 

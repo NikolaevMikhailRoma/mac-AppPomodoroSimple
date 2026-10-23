@@ -348,7 +348,7 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
     private companion object {
         const val SERVICE_TYPE = "_pomodoro._tcp"
         const val PING_AFTER = 20.0
-        const val SEND_INTERVAL = 0.25
+        const val SEND_INTERVAL = 0.1
         const val SILENCE_LIMIT = 60.0
 
         fun now(): Double = System.currentTimeMillis() / 1000.0

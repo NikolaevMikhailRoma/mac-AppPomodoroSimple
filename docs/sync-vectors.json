@@ -170,6 +170,30 @@
       "remote": 0,
       "adopt": true,
       "why": "two untouched states: the Mac takes the phone's, with its count"
+    },
+    {
+      "receiver": "mac",
+      "local": 100,
+      "remote": 100.25,
+      "localAdopted": true,
+      "adopt": true,
+      "why": "the Mac's state came from the phone: the next drag step 0.25 s later wins"
+    },
+    {
+      "receiver": "mac",
+      "local": 100,
+      "remote": 100.25,
+      "localAdopted": false,
+      "adopt": false,
+      "why": "the Mac changed it itself: within 1 s the Mac wins"
+    },
+    {
+      "receiver": "mac",
+      "local": 100,
+      "remote": 99.75,
+      "localAdopted": true,
+      "adopt": false,
+      "why": "an older state never wins"
     }
   ],
   "intervals": {

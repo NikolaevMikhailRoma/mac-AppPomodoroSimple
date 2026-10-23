@@ -134,8 +134,13 @@ object SyncRules {
      * receiver's clock. A state nobody changed (time 0) always loses, and of two
      * such states the phone's wins: it kept its timer, the Mac did not.
      */
-    fun shouldAdopt(local: Double, remote: Double, receiverIsMac: Boolean): Boolean =
-        if (receiverIsMac) local == 0.0 || remote - local > TIE_WINDOW else remote != 0.0 && remote - local >= -TIE_WINDOW
+    fun shouldAdopt(local: Double, remote: Double, receiverIsMac: Boolean, localAdopted: Boolean = false): Boolean =
+        if (receiverIsMac) {
+            // A state the Mac took from a phone is not a change of its own: no tie window.
+            local == 0.0 || remote - local > (if (localAdopted) 0.0 else TIE_WINDOW)
+        } else {
+            remote != 0.0 && remote - local >= -TIE_WINDOW
+        }
 
     /** The same for interval settings, except that defaults (time 0) never win, not even over other defaults. */
     fun shouldAdoptIntervals(local: Double, remote: Double, receiverIsMac: Boolean): Boolean =

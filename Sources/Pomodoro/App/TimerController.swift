@@ -20,6 +20,9 @@ final class TimerController {
     @ObservationIgnored private var notifier = Notifier()
     @ObservationIgnored private var settings: Settings
     @ObservationIgnored private var sentChangedAt: Date?
+    /// The change time of the last state taken from a phone: while the engine
+    /// still has it, the Mac has not changed the timer itself since.
+    @ObservationIgnored private var adoptedChangedAt: Date?
 
     init(config: AppConfig, settings: Settings) {
         self.settings = settings
@@ -79,10 +82,13 @@ final class TimerController {
 
     /// A phone's state, already on this Mac's clock (docs/SYNC.md, Merging).
     func receive(_ remote: EngineState) {
-        guard SyncRules.shouldAdopt(local: engine.state.changedAt, remote: remote.changedAt, receiverIsMac: true) else {
+        let local = engine.state.changedAt
+        guard SyncRules.shouldAdopt(local: local, remote: remote.changedAt, receiverIsMac: true,
+                                    localAdopted: local == adoptedChangedAt) else {
             return
         }
         engine.adopt(remote)
+        adoptedChangedAt = remote.changedAt
         syncTicker()
         changed()
     }

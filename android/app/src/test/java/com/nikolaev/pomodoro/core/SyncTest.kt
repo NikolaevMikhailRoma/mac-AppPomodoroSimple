@@ -135,7 +135,12 @@ class SyncWireTest {
         val cases = vectors.getJSONArray("merge")
         for (i in 0 until cases.length()) {
             val m = cases.getJSONObject(i)
-            val adopt = SyncRules.shouldAdopt(m.getDouble("local"), m.getDouble("remote"), m.getString("receiver") == "mac")
+            val adopt = SyncRules.shouldAdopt(
+                m.getDouble("local"),
+                m.getDouble("remote"),
+                m.getString("receiver") == "mac",
+                m.optBoolean("localAdopted", false),
+            )
             assertEquals(m.getString("why"), m.getBoolean("adopt"), adopt)
         }
     }

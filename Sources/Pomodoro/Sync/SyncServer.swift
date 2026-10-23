@@ -14,7 +14,7 @@ final class SyncServer {
     static let preferredPort: UInt16 = 52025
     static let pairingLifetime: TimeInterval = 120
     /// Dragging the ring changes the state with every mouse move; phones get the newest this often.
-    static let sendInterval: TimeInterval = 0.25
+    static let sendInterval: TimeInterval = 0.1
     /// This Mac's name in System Settings → General → Sharing, for the phone's device list.
     static var macName: String { (SCDynamicStoreCopyComputerName(nil, nil) as String?) ?? "Mac" }
 
@@ -46,6 +46,9 @@ final class SyncServer {
     @ObservationIgnored private var wantsPairing = false
     @ObservationIgnored private var pairingTimer: Timer?
     @ObservationIgnored private var pendingState: EngineState?
+    /// The phone a pending state came from: it has that state already.
+    @ObservationIgnored private var pendingSource: Peer?
+    @ObservationIgnored private var receivingFrom: Peer?
     @ObservationIgnored private var lastBroadcast = Date.distantPast
     @ObservationIgnored private var sentIntervalsAt: Date?
 
@@ -78,6 +81,9 @@ final class SyncServer {
 
     func broadcast(_ state: EngineState) {
         let scheduled = pendingState != nil
+        // A state taken from a phone goes to the others only; a newer change
+        // of the Mac's own, before the send, goes to all.
+        pendingSource = scheduled && pendingSource !== receivingFrom ? nil : receivingFrom
         pendingState = state
         guard !scheduled else { return }
         let wait = max(0, lastBroadcast.addingTimeInterval(Self.sendInterval).timeIntervalSinceNow)
@@ -100,9 +106,10 @@ final class SyncServer {
         guard let state = pendingState else { return }
         pendingState = nil
         lastBroadcast = Date()
-        for peer in peers where peer.isOpen {
+        for peer in peers where peer.isOpen && peer !== pendingSource {
             peer.send(.state(state, sentAt: lastBroadcast))
         }
+        pendingSource = nil
     }
 
     // MARK: - Listening
@@ -229,7 +236,9 @@ final class SyncServer {
     fileprivate func received(_ message: SyncMessage, from peer: Peer) {
         switch message {
         case .state(let state, let sentAt):
+            receivingFrom = peer
             onState(state.shifted(by: Date().timeIntervalSince(sentAt)))
+            receivingFrom = nil
         case .intervals(let intervals, let changedAt, let sentAt):
             onIntervals(intervals, SyncRules.shifted(changedAt, by: Date().timeIntervalSince(sentAt)))
         case .unpair:
