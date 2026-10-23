@@ -69,7 +69,7 @@ The same timer on Android 8 and newer. Tested on a Motorola Edge 50 with Android
 
 To build it yourself: JDK 21 and the Android SDK, then `cd android && ./gradlew assembleRelease`.
 
-## Version history
+# Version history
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -78,6 +78,6 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **0.1.1** — ▷| counts a skipped work interval, 59:59 limit with hints, a second copy no longer starts.
 - **0.1.0** — first release: menu bar timer, ring, settings, sounds and notifications.
 
-## License
+# License
 
 MIT — use it however you like.
