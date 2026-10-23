@@ -2,10 +2,13 @@
 
 ![macOS 15+](https://img.shields.io/badge/macOS-15%2B-black?logo=apple)
 ![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
+![Android 8+](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
+![Kotlin 2.4](https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white)
 [![License](https://img.shields.io/github/license/NikolaevMikhailRoma/mac-AppPomodoroSimple)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/NikolaevMikhailRoma/mac-AppPomodoroSimple)](https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/NikolaevMikhailRoma/mac-AppPomodoroSimple/total)](https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases)
 
+# macOS
 ![Menu bar and timer](assets/popover.png)
 
 A minimal native macOS menu bar pomodoro timer: red while working, green on a
@@ -49,10 +52,28 @@ Run the unit tests with `swift test` (pure logic lives in the `PomodoroCore` and
 `PomodoroConfig` targets). Every colour, size and icon is in
 [`config.json`](Sources/PomodoroConfig/Resources/config.json), not in the code.
 
+# Android (experimental)
+
+The same timer on Android 8 and newer. Tested on a Motorola Edge 50 with Android 16.
+
+<p>
+  <img src="assets/android-timer.png" width="270" alt="Android timer">
+</p>
+
+## Run the app (users)
+
+1. Download `Pomodoro.apk` from the [latest release](https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases/latest) on the phone and open it.
+2. Allow installing from that app (Files, the browser) when Android asks. Google Play Protect may warn about an unknown app: choose **Install anyway**.
+
+## Build from source (developers)
+
+To build it yourself: JDK 21 and the Android SDK, then `cd android && ./gradlew assembleRelease`.
+
 ## Version history
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
+- **0.2.0** — experimental Android app; the Mac app is unchanged.
 - **0.1.2** — fixed a crash on launch on another Mac.
 - **0.1.1** — ▷| counts a skipped work interval, 59:59 limit with hints, a second copy no longer starts.
 - **0.1.0** — first release: menu bar timer, ring, settings, sounds and notifications.
