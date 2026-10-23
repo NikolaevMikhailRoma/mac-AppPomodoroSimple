@@ -311,6 +311,7 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
                     when (reply.reason) {
                         "unknown-device" -> "The Mac no longer knows this phone. Forget it here and pair again."
                         "pairing-expired" -> "The code on the Mac has expired. Show a new one and scan again."
+                        "keychain" -> "The Mac could not open this phone's key. Allow Pomodoro when the Mac asks for the Keychain password, then reopen the app."
                         "version" -> "Update Pomodoro on both devices."
                         else -> "The Mac refused: ${reply.reason}"
                     },

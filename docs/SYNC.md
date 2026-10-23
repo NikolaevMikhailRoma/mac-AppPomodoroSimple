@@ -77,7 +77,8 @@ or with an error and closes the connection:
 {"type": "error", "reason": "unknown-device"}
 ```
 
-`reason` is `unknown-device`, `pairing-expired` or `version`. The phone shows
+`reason` is `unknown-device`, `pairing-expired`, `keychain` (the Mac could
+not read the phone's key: the user denied the Keychain prompt) or `version`. The phone shows
 it but never forgets the Mac because of it: the error is unauthenticated.
 
 ## Keys

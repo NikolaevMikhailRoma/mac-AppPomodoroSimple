@@ -201,10 +201,11 @@ final class SyncServer {
     }
 
     /// The answer to a phone's first frame: the device key, or the error to send back.
-    fileprivate func handshake(_ message: SyncMessage) -> Result<Accepted, HandshakeError> {
+    fileprivate func handshake(_ message: SyncMessage) async -> Result<Accepted, HandshakeError> {
         switch message {
         case .hello(let id, let nonce, _, _):
-            guard let key = devices.key(for: id) else { return .failure(.reason("unknown-device")) }
+            guard devices.contains(id) else { return .failure(.reason("unknown-device")) }
+            guard let key = await devices.key(for: id) else { return .failure(.reason("keychain")) }
             return .success(Accepted(id: id, key: key, nonce: nonce))
         case .pair(let id, let name, let kind, let phoneKey, let nonce, let proof):
             guard let pairing, pairing.expiresAt > Date(),
@@ -311,6 +312,8 @@ private final class Peer {
     private var lastReceived = Date()
     private var watchdog: Timer?
     private var isClosed = false
+    /// The hello is being checked; it can wait on a Keychain password prompt.
+    private var checkingHello = false
 
     var isOpen: Bool { cipher != nil && !isClosed }
 
@@ -373,7 +376,8 @@ private final class Peer {
 
     private func drain() {
         do {
-            while !isClosed, let frame = try reader.next() {
+            // Frames after the hello wait in the reader until it is checked.
+            while !isClosed, !checkingHello, let frame = try reader.next() {
                 lastReceived = Date()
                 try handle(frame)
             }
@@ -383,15 +387,24 @@ private final class Peer {
     }
 
     private func handle(_ frame: Data) throws {
-        guard cipher != nil else { return try handshake(frame) }
+        guard cipher != nil else {
+            guard let message = SyncMessage(data: frame) else { throw SyncCrypto.Failure.badFrame }
+            checkingHello = true
+            Task { [weak self] in await self?.handshake(message) }
+            return
+        }
         let plaintext = try cipher!.open(frame)
         guard let message = SyncMessage(data: plaintext) else { throw SyncCrypto.Failure.badFrame }
         server?.received(message, from: self)
     }
 
-    private func handshake(_ frame: Data) throws {
-        guard let server, let message = SyncMessage(data: frame) else { throw SyncCrypto.Failure.badFrame }
-        switch server.handshake(message) {
+    private func handshake(_ message: SyncMessage) async {
+        guard let server else { return close() }
+        let result = await server.handshake(message)
+        checkingHello = false
+        guard !isClosed else { return }
+        defer { drain() }
+        switch result {
         case .failure(.reason(let reason)):
             send(.error(reason))
             close()
@@ -409,7 +422,8 @@ private final class Peer {
 
     private func checkTimers() {
         let now = Date()
-        if cipher == nil, now.timeIntervalSince(lastReceived) > Self.handshakeLimit { return close() }
+        // A hello waiting on the Keychain prompt waits as long as the user does.
+        if cipher == nil, !checkingHello, now.timeIntervalSince(lastReceived) > Self.handshakeLimit { return close() }
         if now.timeIntervalSince(lastReceived) > Self.silenceLimit { return close() }
         if isOpen, now.timeIntervalSince(lastSent) > Self.pingAfter { send(.ping) }
     }
