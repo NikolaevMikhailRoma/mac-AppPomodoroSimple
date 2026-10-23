@@ -50,7 +50,6 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
     private val _status = MutableStateFlow<Status>(if (store.macId == null) Status.NotPaired else Status.Searching)
     val status: StateFlow<Status> = _status.asStateFlow()
 
-    private var active = false
     private var worker: Thread? = null
     @Volatile private var connection: Connection? = null
 
@@ -63,8 +62,7 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
 
     /** True while the app is on screen: only then does the phone keep a connection. */
     fun setActive(on: Boolean) {
-        active = on
-        if (on && store.macId != null && worker == null) start(null) else if (!on) stop()
+        if (!on) stop() else if (store.macId != null && worker == null) start(null)
     }
 
     fun pair(link: PairLink) {
@@ -73,9 +71,16 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
     }
 
     fun forget() {
-        connection?.let { c -> writer.execute { c.trySend(SyncMessage.Unpair); c.close() } }
+        // The Mac forgets the phone too, if it hears this: the writer sends and
+        // then closes, so the worker is only told to stop, not cut off first.
+        val c = connection
+        worker?.interrupt()
+        worker = null
+        writer.execute {
+            c?.trySend(SyncMessage.Unpair)
+            c?.close()
+        }
         store.forget()
-        stop()
         _status.value = Status.NotPaired
     }
 
@@ -96,8 +101,9 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
         var delay = 1_000L
         while (!Thread.currentThread().isInterrupted) {
             setStatus(if (link != null) Status.Pairing else Status.Searching)
+            var c: Connection? = null
             try {
-                val c = if (link != null) pairWith(link) else connect() ?: throw IOException("not found")
+                c = if (link != null) pairWith(link) else connect() ?: throw IOException("not found")
                 link = null
                 delay = 1_000L
                 setStatus(Status.Connected)
@@ -116,8 +122,9 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
                     return
                 }
             } finally {
-                connection?.close()
-                connection = null
+                // Only its own: after pair(), a new worker may already have one.
+                c?.close()
+                if (connection === c) connection = null
             }
             if (Thread.currentThread().isInterrupted) return
             setStatus(Status.Searching)

@@ -51,8 +51,10 @@ data class EngineState(
         )
 
         /** Null when there is nothing usable stored; the caller starts fresh. */
-        fun fromJson(text: String?): EngineState? {
-            val o = text?.let(::parseObject) ?: return null
+        fun fromJson(text: String?): EngineState? = fromJsonObject(text?.let(::parseObject))
+
+        fun fromJsonObject(o: JSONObject?): EngineState? {
+            if (o == null) return null
             val phase = Phase.fromKey(o.optString("phase")) ?: return null
             val runState = RunState.fromKey(o.optString("runState")) ?: return null
             val duration = o.num("phaseDuration", -1.0).takeIf { it > 0 } ?: return null

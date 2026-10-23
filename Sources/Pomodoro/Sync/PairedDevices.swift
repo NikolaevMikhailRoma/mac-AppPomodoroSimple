@@ -58,7 +58,7 @@ final class PairedDevices {
         ]) { a, _ in a } as CFDictionary, nil)
         guard status == errSecSuccess else { return false }
         list.removeAll { $0.id == id }
-        list.append(Device(id: id, name: name.isEmpty ? "Phone" : name))
+        list.append(Device(id: id, name: name.isEmpty ? "Phone" : String(name.prefix(40))))
         save()
         return true
     }

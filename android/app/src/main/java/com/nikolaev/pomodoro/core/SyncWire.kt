@@ -12,8 +12,9 @@ import java.util.Base64
 const val SYNC_VERSION = 1
 
 sealed interface SyncMessage {
-    data class Hello(val id: String, val nonce: ByteArray) : SyncMessage
-    data class Pair(val id: String, val name: String, val publicKey: ByteArray, val nonce: ByteArray, val proof: ByteArray) :
+    // Plain classes: a data class would compare byte arrays by identity.
+    class Hello(val id: String, val nonce: ByteArray) : SyncMessage
+    class Pair(val id: String, val name: String, val publicKey: ByteArray, val nonce: ByteArray, val proof: ByteArray) :
         SyncMessage
     data class Error(val reason: String) : SyncMessage
     data class State(val state: EngineState, val sentAt: Double) : SyncMessage
@@ -74,7 +75,7 @@ fun EngineState.Companion.fromWire(o: JSONObject?): EngineState? {
     } catch (_: Exception) {
         0L
     }
-    return fromJson(JSONObject(o.toString()).put("countedDay", day).toString())
+    return fromJsonObject(JSONObject(o, o.keys().asSequence().toList().toTypedArray()).put("countedDay", day))
 }
 
 /** Moves the sender's times onto the receiver's clock. */

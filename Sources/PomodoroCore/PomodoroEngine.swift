@@ -20,7 +20,7 @@ public struct EngineState: Equatable, Sendable {
     /// When the state last changed: a button, or the moment an interval ran out.
     public var changedAt: Date
 
-    public static func initial(settings: IntervalSettings, day: String = "") -> EngineState {
+    public static func initial(settings: IntervalSettings) -> EngineState {
         EngineState(
             phase: .work,
             runState: .idle,
@@ -29,7 +29,7 @@ public struct EngineState: Equatable, Sendable {
             endsAt: nil,
             completedToday: 0,
             sinceLongBreak: 0,
-            day: day,
+            day: "",
             changedAt: Date(timeIntervalSince1970: 0)
         )
     }

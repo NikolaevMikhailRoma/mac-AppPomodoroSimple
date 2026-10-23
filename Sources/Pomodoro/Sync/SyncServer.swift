@@ -158,12 +158,12 @@ final class SyncServer {
     }
 
     /// The answer to a phone's first frame: the device key, or the error to send back.
-    fileprivate func handshake(_ message: SyncMessage) -> Result<(id: String, key: SymmetricKey), HandshakeError> {
+    fileprivate func handshake(_ message: SyncMessage) -> Result<Accepted, HandshakeError> {
         switch message {
-        case .hello(let id, _):
+        case .hello(let id, let nonce):
             guard let key = devices.key(for: id) else { return .failure(.reason("unknown-device")) }
-            return .success((id, key))
-        case .pair(let id, let name, let phoneKey, _, let proof):
+            return .success(Accepted(id: id, key: key, nonce: nonce))
+        case .pair(let id, let name, let phoneKey, let nonce, let proof):
             guard let pairing, pairing.expiresAt > Date(),
                   SyncCrypto.proofMatches(proof, token: pairing.link.token,
                                           phonePublicKey: phoneKey, macPublicKey: pairing.link.publicKey),
@@ -174,7 +174,7 @@ final class SyncServer {
             // One QR, one phone. After add(): with no phone paired, ending the
             // pairing would stop the listener and drop this very connection.
             endPairing()
-            return .success((id, key))
+            return .success(Accepted(id: id, key: key, nonce: nonce))
         case .unsupportedVersion:
             return .failure(.reason("version"))
         default:
@@ -229,6 +229,13 @@ final class SyncServer {
         }
         return result
     }
+}
+
+/// A phone let in: its id, its device key and its hello nonce.
+fileprivate struct Accepted {
+    let id: String
+    let key: SymmetricKey
+    let nonce: Data
 }
 
 fileprivate enum HandshakeError: Error {
@@ -340,17 +347,12 @@ private final class Peer {
             close()
         case .failure(.silent):
             close()
-        case .success(let (id, key)):
-            let nonceClient: Data
-            switch message {
-            case .hello(_, let nonce), .pair(_, _, _, let nonce, _): nonceClient = nonce
-            default: return close()
-            }
+        case .success(let phone):
             let nonceServer = SyncServer.random(16)
             send(.hello(id: server.devices.macId, nonce: nonceServer))
-            let keys = SyncCrypto.sessionKeys(deviceKey: key, nonceClient: nonceClient, nonceServer: nonceServer)
+            let keys = SyncCrypto.sessionKeys(deviceKey: phone.key, nonceClient: phone.nonce, nonceServer: nonceServer)
             cipher = SessionCipher(sendKey: keys.s2c, receiveKey: keys.c2s)
-            deviceId = id
+            deviceId = phone.id
             server.opened(self)
         }
     }

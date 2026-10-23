@@ -9,10 +9,7 @@ final class SettingsWindowController {
     private let loginItem: LoginItem
     private var closeObserver: NSObjectProtocol?
 
-    private let sync: SyncServer?
-
     init(store: SettingsStore, loginItem: LoginItem, config: AppConfig, sync: SyncServer? = nil, tab: SettingsTab = .general) {
-        self.sync = sync
         self.loginItem = loginItem
         let metrics = config.settingsWindow
         window = NSWindow(
