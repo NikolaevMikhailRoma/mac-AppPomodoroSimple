@@ -145,7 +145,8 @@ final class SyncServer {
         #endif
         pairingTimer?.invalidate()
         pairingTimer = Timer.scheduledTimer(withTimeInterval: Self.pairingLifetime, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated { self?.pairing = nil }
+            // As Cancel does: with no phone paired, the Mac stops listening too.
+            MainActor.assumeIsolated { self?.endPairing() }
         }
     }
 

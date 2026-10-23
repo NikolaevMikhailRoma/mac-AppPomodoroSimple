@@ -62,7 +62,8 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
 
     /** True while the app is on screen: only then does the phone keep a connection. */
     fun setActive(on: Boolean) {
-        if (!on) stop() else if (store.macId != null && worker == null) start(null)
+        // A worker that gave up (a failed pairing, a refusal) is started again on the next return.
+        if (!on) stop() else if (store.macId != null && worker?.isAlive != true) start(null)
     }
 
     fun pair(link: PairLink) {
@@ -88,6 +89,8 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
         worker = Thread({ run(pairing) }, "sync").apply { start() }
     }
 
+    /** Atomic with the hand-over in [open]: a worker either sees the interrupt or has its socket closed here. */
+    @Synchronized
     private fun stop() {
         worker?.interrupt()
         worker = null
@@ -174,7 +177,14 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
                     connect(InetSocketAddress(host, port), 3_000)
                     soTimeout = (SILENCE_LIMIT * 1000).toInt()
                 }
-                return Connection(socket, host, port).also { connection = it }
+                // A connect cannot be interrupted: a worker stopped during it must not take over.
+                synchronized(this) {
+                    if (Thread.currentThread().isInterrupted) {
+                        socket.close()
+                        return null
+                    }
+                    return Connection(socket, host, port).also { connection = it }
+                }
             } catch (_: IOException) {
                 // Try the next address.
             }
