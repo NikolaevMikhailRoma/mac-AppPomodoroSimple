@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- The popover's background from the first frame, so the launch does not flash white. -->
+    <style name="Theme.Pomodoro" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+        <!-- Android 12+ only; older versions skip it and show windowBackground. -->
+        <item name="android:windowSplashScreenBackground" tools:targetApi="31">@color/background</item>
+    </style>
+</resources>
