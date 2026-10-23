@@ -243,7 +243,7 @@ private fun MacTab(sync: SyncClient, onPair: () -> Unit) {
         is SyncClient.Status.Failed -> s.message
     }
     Text(text, style = labelStyle, modifier = Modifier.padding(vertical = 12.dp))
-    val paired = status != SyncClient.Status.NotPaired
+    val paired = sync.isPaired
     Text(
         if (paired) "Forget the Mac" else "Pair with Mac",
         style = labelStyle.copy(color = S.accent),

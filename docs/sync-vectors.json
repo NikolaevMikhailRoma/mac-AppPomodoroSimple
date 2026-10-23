@@ -149,6 +149,27 @@
       "remote": 50,
       "adopt": true,
       "why": "a freshly launched Mac takes the phone's timer"
+    },
+    {
+      "receiver": "phone",
+      "local": 0,
+      "remote": 0,
+      "adopt": false,
+      "why": "two untouched states: the phone keeps its own"
+    },
+    {
+      "receiver": "phone",
+      "local": 100,
+      "remote": 0,
+      "adopt": false,
+      "why": "an untouched Mac never wins"
+    },
+    {
+      "receiver": "mac",
+      "local": 0,
+      "remote": 0,
+      "adopt": true,
+      "why": "two untouched states: the Mac takes the phone's, with its count"
     }
   ]
 }

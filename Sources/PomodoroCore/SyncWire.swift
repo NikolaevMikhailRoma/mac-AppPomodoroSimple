@@ -124,11 +124,13 @@ public enum SyncRules {
     public static let tieWindow: TimeInterval = 1
 
     /// Whether the receiver takes the other device's state. Both times are on
-    /// the receiver's clock.
+    /// the receiver's clock. A state nobody changed (time 0) always loses, and
+    /// of two such states the phone's wins: it kept its timer, the Mac did not.
     public static func shouldAdopt(local: Date, remote: Date, receiverIsMac: Bool) -> Bool {
-        receiverIsMac
-            ? remote.timeIntervalSince(local) > tieWindow
-            : remote.timeIntervalSince(local) >= -tieWindow
+        let never = Date(timeIntervalSince1970: 0)
+        return receiverIsMac
+            ? local == never || remote.timeIntervalSince(local) > tieWindow
+            : remote != never && remote.timeIntervalSince(local) >= -tieWindow
     }
 }
 

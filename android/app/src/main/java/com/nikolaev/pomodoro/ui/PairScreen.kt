@@ -1,7 +1,10 @@
 package com.nikolaev.pomodoro.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -40,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.PlanarYUVLuminanceSource
@@ -60,8 +64,18 @@ fun PairScreen(onLink: (PairLink) -> Unit, onBack: () -> Unit) {
     var allowed by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
-    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed = it }
+    // After a refusal Android may not show the dialog again: then the button opens the app's settings.
+    var refused by remember { mutableStateOf(false) }
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        allowed = it
+        refused = !it
+    }
     LaunchedEffect(Unit) { if (!allowed) ask.launch(Manifest.permission.CAMERA) }
+    LifecycleResumeEffect(Unit) {
+        // Back from the app's settings.
+        allowed = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        onPauseOrDispose {}
+    }
 
     val label = TextStyle(color = S.label, fontSize = S.LABEL_SIZE.sp)
     Column(Modifier.fillMaxSize().background(S.background).safeDrawingPadding().padding(horizontal = S.MARGIN.dp)) {
@@ -94,7 +108,15 @@ fun PairScreen(onLink: (PairLink) -> Unit, onBack: () -> Unit) {
             Text(
                 "Allow the camera",
                 style = label.copy(color = S.accent),
-                modifier = Modifier.clickable { ask.launch(Manifest.permission.CAMERA) }.padding(vertical = 16.dp),
+                modifier = Modifier.clickable {
+                    if (refused) {
+                        context.startActivity(
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
+                        )
+                    } else {
+                        ask.launch(Manifest.permission.CAMERA)
+                    }
+                }.padding(vertical = 16.dp),
             )
         }
     }

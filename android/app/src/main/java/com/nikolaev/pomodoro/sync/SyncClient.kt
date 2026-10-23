@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import com.nikolaev.pomodoro.TimerRepository
+import com.nikolaev.pomodoro.core.EngineState
 import com.nikolaev.pomodoro.core.Frames
 import com.nikolaev.pomodoro.core.PairLink
 import com.nikolaev.pomodoro.core.SessionCipher
@@ -26,6 +27,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The phone's side of docs/SYNC.md: finds the paired Mac on the Wi-Fi, keeps
@@ -50,11 +52,26 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
     private val _status = MutableStateFlow<Status>(if (store.macId == null) Status.NotPaired else Status.Searching)
     val status: StateFlow<Status> = _status.asStateFlow()
 
+    /** Read with [status]: every change of this one changes the status too. */
+    val isPaired: Boolean get() = store.macId != null
+
     private var worker: Thread? = null
     @Volatile private var connection: Connection? = null
+    /** The newest state not sent yet: dragging the ring changes it with every step. */
+    private val pendingState = AtomicReference<EngineState?>(null)
+    @Volatile private var lastStateSent = 0.0
 
     init {
-        timer.onStateChange = { state -> connection?.let { c -> writer.execute { c.trySend(SyncMessage.State(state, now())) } } }
+        timer.onStateChange = { state ->
+            if (pendingState.getAndSet(state) == null) {
+                val wait = ((lastStateSent + SEND_INTERVAL - now()) * 1000).toLong().coerceAtLeast(0)
+                writer.schedule({
+                    val newest = pendingState.getAndSet(null) ?: return@schedule
+                    lastStateSent = now()
+                    connection?.trySend(SyncMessage.State(newest, lastStateSent))
+                }, wait, TimeUnit.MILLISECONDS)
+            }
+        }
         writer.scheduleWithFixedDelay({
             connection?.takeIf { now() - it.lastSent > PING_AFTER }?.trySend(SyncMessage.Ping)
         }, 5, 5, TimeUnit.SECONDS)
@@ -313,6 +330,7 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
     private companion object {
         const val SERVICE_TYPE = "_pomodoro._tcp"
         const val PING_AFTER = 20.0
+        const val SEND_INTERVAL = 0.25
         const val SILENCE_LIMIT = 60.0
 
         fun now(): Double = System.currentTimeMillis() / 1000.0

@@ -131,12 +131,20 @@ is the network delay, milliseconds at home.
 Then the later change wins. Within 1 second the Mac wins: when an interval
 runs out on both devices, the phone takes the Mac's next interval.
 
-- The phone takes the remote state if `remote.changedAt ≥ local.changedAt − 1`.
-- The Mac takes it if `remote.changedAt > local.changedAt + 1`.
+A state nobody has changed (`changedAt` 0) always loses. Between two such
+states the phone's wins: the Mac forgets its timer on quit, the phone keeps
+it, together with the day's count.
+
+- The phone takes the remote state if `remote.changedAt ≠ 0` and
+  `remote.changedAt ≥ local.changedAt − 1`.
+- The Mac takes it if `local.changedAt = 0` or
+  `remote.changedAt > local.changedAt + 1`.
 
 Taking a state plays no sound and posts no notification. A device sends its
-state whenever its `changedAt` differs from the last one it sent or took.
-The Mac sends to every connected phone, the phone to the Mac.
+state whenever its `changedAt` differs from the last one it sent or took,
+at most every 0.25 seconds and always the newest: dragging the ring changes
+the state with every mouse move. The Mac sends to every connected phone, the
+phone to the Mac.
 
 Settings are not synced. Each device uses its own durations for the next
 interval until the states meet.

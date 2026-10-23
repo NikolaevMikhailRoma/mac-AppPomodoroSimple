@@ -12,6 +12,8 @@ import PomodoroCore
 final class SyncServer {
     static let preferredPort: UInt16 = 52025
     static let pairingLifetime: TimeInterval = 120
+    /// Dragging the ring changes the state with every mouse move; phones get the newest this often.
+    static let sendInterval: TimeInterval = 0.25
 
     struct Pairing {
         let link: PairLink
@@ -36,6 +38,8 @@ final class SyncServer {
     @ObservationIgnored private var peers: [Peer] = []
     @ObservationIgnored private var wantsPairing = false
     @ObservationIgnored private var pairingTimer: Timer?
+    @ObservationIgnored private var pendingState: EngineState?
+    @ObservationIgnored private var lastBroadcast = Date.distantPast
 
     init(devices: PairedDevices) {
         self.devices = devices
@@ -65,8 +69,21 @@ final class SyncServer {
     }
 
     func broadcast(_ state: EngineState) {
+        let scheduled = pendingState != nil
+        pendingState = state
+        guard !scheduled else { return }
+        let wait = max(0, lastBroadcast.addingTimeInterval(Self.sendInterval).timeIntervalSinceNow)
+        DispatchQueue.main.asyncAfter(deadline: .now() + wait) { [weak self] in
+            MainActor.assumeIsolated { self?.sendPendingState() }
+        }
+    }
+
+    private func sendPendingState() {
+        guard let state = pendingState else { return }
+        pendingState = nil
+        lastBroadcast = Date()
         for peer in peers where peer.isOpen {
-            peer.send(.state(state, sentAt: Date()))
+            peer.send(.state(state, sentAt: lastBroadcast))
         }
     }
 

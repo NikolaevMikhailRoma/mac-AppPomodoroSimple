@@ -86,9 +86,13 @@ object SyncRules {
     /** Changes closer than this count as simultaneous, and the Mac wins. */
     const val TIE_WINDOW = 1.0
 
-    /** Whether the receiver takes the other device's state. Both times are on the receiver's clock. */
+    /**
+     * Whether the receiver takes the other device's state. Both times are on the
+     * receiver's clock. A state nobody changed (time 0) always loses, and of two
+     * such states the phone's wins: it kept its timer, the Mac did not.
+     */
     fun shouldAdopt(local: Double, remote: Double, receiverIsMac: Boolean): Boolean =
-        if (receiverIsMac) remote - local > TIE_WINDOW else remote - local >= -TIE_WINDOW
+        if (receiverIsMac) local == 0.0 || remote - local > TIE_WINDOW else remote != 0.0 && remote - local >= -TIE_WINDOW
 }
 
 /** What the pairing QR on the Mac says. */
