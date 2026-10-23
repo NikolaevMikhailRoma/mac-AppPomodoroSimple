@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import com.nikolaev.pomodoro.TimerRepository
+import com.nikolaev.pomodoro.core.DeviceKind
 import com.nikolaev.pomodoro.core.EngineState
 import com.nikolaev.pomodoro.core.Frames
 import com.nikolaev.pomodoro.core.PairLink
@@ -55,6 +56,12 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
 
     /** Read with [status]: every change of this one changes the status too. */
     val isPaired: Boolean get() = store.macId != null
+
+    /** "MacBook Pro (Mac)", or "the Mac" until it has said its name. */
+    val pairedTitle: String get() {
+        val name = store.macName ?: return "the Mac"
+        return "$name (${DeviceKind.title(store.macKind ?: DeviceKind.MAC)})"
+    }
 
     private var worker: Thread? = null
     @Volatile private var connection: Connection? = null
@@ -170,12 +177,13 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
         val deviceKey = SyncCrypto.deviceKey(keys.private, link.publicKey, link.token)
         val nonce = PairedMac.randomBytes(16)
         val proof = SyncCrypto.proof(link.token, phoneKey, link.publicKey)
-        c.trySend(SyncMessage.Pair(store.phoneId, Build.MODEL, phoneKey, nonce, proof))
-        c.startSession(link.macId, deviceKey, nonce)
+        c.trySend(SyncMessage.Pair(store.phoneId, Build.MODEL, DeviceKind.ANDROID, phoneKey, nonce, proof))
+        val mac = c.startSession(link.macId, deviceKey, nonce)
         // Only the Mac that showed the QR can derive the key: a first frame
         // that decrypts proves it is that Mac. Store the key only then.
         val first = c.read()
         store.save(link.macId, deviceKey, c.host, c.port)
+        store.saveIdentity(mac.name, mac.kind)
         val receivedAt = now()
         main.post { handle(first, receivedAt) }
         return c
@@ -186,9 +194,10 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
         val key = store.deviceKey() ?: throw Refused("This phone lost its key. Forget the Mac and pair again.")
         val c = open(listOfNotNull(discover(macId), store.lastAddress).distinct()) ?: return null
         val nonce = PairedMac.randomBytes(16)
-        c.trySend(SyncMessage.Hello(store.phoneId, nonce))
-        c.startSession(macId, key, nonce)
+        c.trySend(SyncMessage.Hello(store.phoneId, nonce, Build.MODEL, DeviceKind.ANDROID))
+        val mac = c.startSession(macId, key, nonce)
         store.saveAddress(c.host, c.port)
+        store.saveIdentity(mac.name, mac.kind)
         return c
     }
 
@@ -290,12 +299,13 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
         @Volatile var lastSent = now()
 
         /** The Mac's hello, checked to come from the expected Mac, then the session keys. */
-        fun startSession(macId: String, deviceKey: ByteArray, nonceClient: ByteArray) {
+        fun startSession(macId: String, deviceKey: ByteArray, nonceClient: ByteArray): SyncMessage.Hello {
             when (val reply = read()) {
                 is SyncMessage.Hello -> {
                     if (reply.id != macId) throw IOException("another Mac")
                     val (c2s, s2c) = SyncCrypto.sessionKeys(deviceKey, nonceClient, reply.nonce)
                     cipher = SessionCipher(sendKey = c2s, receiveKey = s2c)
+                    return reply
                 }
                 is SyncMessage.Error -> throw Refused(
                     when (reply.reason) {

@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             // "timer", "settings" or "pair".
             var screen by rememberSaveable { mutableStateOf("timer") }
-            // Coming back from the scanner lands on the Mac tab, not the first one.
+            // Coming back from the scanner lands on the Devices tab, not the first one.
             var settingsTab by rememberSaveable { mutableStateOf<String?>(null) }
             when (screen) {
                 "pair" -> {
@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
                         sync,
                         onBack = close,
                         onFixNotifications = ::openNotificationSettings,
-                        onPair = { screen = "pair"; settingsTab = "MAC" },
+                        onPair = { screen = "pair"; settingsTab = "DEVICES" },
                         initialTab = settingsTab,
                     )
                 }

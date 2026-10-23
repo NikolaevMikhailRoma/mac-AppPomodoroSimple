@@ -68,7 +68,7 @@ private enum class Tab(val title: String) {
     GENERAL("General"),
     INTERVALS("Intervals"),
     SOUNDS("Sounds"),
-    MAC("Mac"),
+    DEVICES("Devices"),
 }
 
 /** The Mac settings window as a phone screen: the same tabs in the same box, and a tab for the Mac itself. */
@@ -121,7 +121,7 @@ fun SettingsScreen(
                         Tab.GENERAL -> GeneralTab(settings, update, blocked)
                         Tab.INTERVALS -> IntervalsTab(settings, timer, update)
                         Tab.SOUNDS -> SoundsTab(settings, timer.sound, update, blocked)
-                        Tab.MAC -> MacTab(sync, onPair)
+                        Tab.DEVICES -> DevicesTab(sync, onPair)
                     }
                 }
                 TabBar(tab, Modifier.align(Alignment.TopCenter)) { tab = it }
@@ -232,26 +232,35 @@ private fun SoundsTab(s: Settings, player: SoundPlayer, update: (Settings) -> Un
     blocked(sound.notificationsEnabled)
 }
 
+/** Like the Mac's Devices tab: the paired device in a row, with its state and Forget. */
 @Composable
-private fun MacTab(sync: SyncClient, onPair: () -> Unit) {
+private fun DevicesTab(sync: SyncClient, onPair: () -> Unit) {
     val status by sync.status.collectAsStateWithLifecycle()
-    val text = when (val s = status) {
-        SyncClient.Status.NotPaired -> "Pair with Pomodoro on your Mac to see and control one timer from both, over your Wi-Fi."
-        SyncClient.Status.Pairing -> "Pairing…"
-        SyncClient.Status.Searching -> "Looking for the Mac on this Wi-Fi…"
-        SyncClient.Status.Connected -> "Connected to the Mac."
-        is SyncClient.Status.Failed -> s.message
+    val action = labelStyle.copy(color = S.accent)
+    if (sync.isPaired) {
+        FormRow(sync.pairedTitle) {
+            val state = when (status) {
+                SyncClient.Status.Connected -> "Connected"
+                SyncClient.Status.Pairing -> "Pairing…"
+                SyncClient.Status.Searching -> "Looking…"
+                else -> ""
+            }
+            Text(state, style = secondaryStyle, modifier = Modifier.padding(end = 12.dp))
+            Text("Forget", style = action, modifier = Modifier.clickable(onClick = sync::forget).padding(8.dp))
+        }
+    } else {
+        Text(
+            "Pair with Pomodoro on your Mac to see and control one timer from both, over your Wi-Fi.",
+            style = labelStyle,
+            modifier = Modifier.padding(vertical = 12.dp),
+        )
     }
-    Text(text, style = labelStyle, modifier = Modifier.padding(vertical = 12.dp))
-    val paired = sync.isPaired
+    (status as? SyncClient.Status.Failed)?.let { Text(it.message, style = secondaryStyle, modifier = Modifier.padding(vertical = 8.dp)) }
     Text(
-        if (paired) "Forget the Mac" else "Pair with Mac",
-        style = labelStyle.copy(color = S.accent),
-        modifier = Modifier.clickable { if (paired) sync.forget() else onPair() }.padding(vertical = 12.dp),
+        if (sync.isPaired) "Pair again" else "Pair with Mac",
+        style = action,
+        modifier = Modifier.clickable(onClick = onPair).padding(vertical = 12.dp),
     )
-    if (paired) {
-        Text("Pair again", style = labelStyle.copy(color = S.accent), modifier = Modifier.clickable(onClick = onPair).padding(vertical = 12.dp))
-    }
 }
 
 @Composable

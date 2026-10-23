@@ -4,8 +4,9 @@ import Foundation
 // The protocol is docs/SYNC.md; docs/sync-vectors.json pins every detail.
 
 public enum SyncMessage: Equatable, Sendable {
-    case hello(id: String, nonce: Data)
-    case pair(id: String, name: String, publicKey: Data, nonce: Data, proof: Data)
+    /// `name` and `kind` describe the sender for the other side's device list; empty from older builds.
+    case hello(id: String, nonce: Data, name: String = "", kind: String = "")
+    case pair(id: String, name: String, kind: String = "", publicKey: Data, nonce: Data, proof: Data)
     case error(String)
     case state(EngineState, sentAt: Date)
     case intervals(IntervalSettings, changedAt: Date, sentAt: Date)
@@ -27,12 +28,13 @@ public enum SyncMessage: Equatable, Sendable {
             guard o["v"] as? Int == Self.version else { self = .unsupportedVersion; return }
             guard let id = o["id"] as? String, let nonce = Data(base64URL: o["nonce"]), nonce.count == 16
             else { return nil }
+            let name = o["name"] as? String ?? "", kind = o["kind"] as? String ?? ""
             if type == "hello" {
-                self = .hello(id: id, nonce: nonce)
+                self = .hello(id: id, nonce: nonce, name: name, kind: kind)
                 return
             }
             guard let pub = Data(base64URL: o["pub"]), let proof = Data(base64URL: o["proof"]) else { return nil }
-            self = .pair(id: id, name: o["name"] as? String ?? "", publicKey: pub, nonce: nonce, proof: proof)
+            self = .pair(id: id, name: name, kind: kind, publicKey: pub, nonce: nonce, proof: proof)
         case "error":
             self = .error(o["reason"] as? String ?? "")
         case "state":
@@ -56,10 +58,10 @@ public enum SyncMessage: Equatable, Sendable {
     public var data: Data {
         let o: [String: Any]
         switch self {
-        case .hello(let id, let nonce):
-            o = ["type": "hello", "v": Self.version, "id": id, "nonce": nonce.base64URL]
-        case .pair(let id, let name, let pub, let nonce, let proof):
-            o = ["type": "pair", "v": Self.version, "id": id, "name": name,
+        case .hello(let id, let nonce, let name, let kind):
+            o = ["type": "hello", "v": Self.version, "id": id, "nonce": nonce.base64URL, "name": name, "kind": kind]
+        case .pair(let id, let name, let kind, let pub, let nonce, let proof):
+            o = ["type": "pair", "v": Self.version, "id": id, "name": name, "kind": kind,
                  "pub": pub.base64URL, "nonce": nonce.base64URL, "proof": proof.base64URL]
         case .error(let reason):
             o = ["type": "error", "reason": reason]
@@ -139,6 +141,23 @@ extension IntervalSettings {
     public var json: [String: Any] {
         ["workMinutes": workMinutes, "shortBreakMinutes": shortBreakMinutes,
          "longBreakMinutes": longBreakMinutes, "longBreakAfter": longBreakAfter]
+    }
+}
+
+/// What a device is, as `kind` names it on the wire.
+public enum DeviceKind {
+    public static let mac = "mac"
+    public static let android = "android"
+
+    /// For the lists of paired devices: "Mac", "Android", "iPhone", "Windows".
+    public static func title(_ kind: String) -> String {
+        switch kind {
+        case mac: return "Mac"
+        case android: return "Android"
+        case "ios": return "iPhone"
+        case "windows": return "Windows"
+        default: return kind.prefix(1).uppercased() + kind.dropFirst()
+        }
     }
 }
 

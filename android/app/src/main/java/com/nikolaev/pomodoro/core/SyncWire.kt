@@ -13,9 +13,16 @@ const val SYNC_VERSION = 1
 
 sealed interface SyncMessage {
     // Plain classes: a data class would compare byte arrays by identity.
-    class Hello(val id: String, val nonce: ByteArray) : SyncMessage
-    class Pair(val id: String, val name: String, val publicKey: ByteArray, val nonce: ByteArray, val proof: ByteArray) :
-        SyncMessage
+    /** [name] and [kind] describe the sender for the other side's device list; empty from older builds. */
+    class Hello(val id: String, val nonce: ByteArray, val name: String = "", val kind: String = "") : SyncMessage
+    class Pair(
+        val id: String,
+        val name: String,
+        val kind: String,
+        val publicKey: ByteArray,
+        val nonce: ByteArray,
+        val proof: ByteArray,
+    ) : SyncMessage
     data class Error(val reason: String) : SyncMessage
     data class State(val state: EngineState, val sentAt: Double) : SyncMessage
     data class Intervals(val intervals: IntervalSettings, val changedAt: Double, val sentAt: Double) : SyncMessage
@@ -28,7 +35,8 @@ sealed interface SyncMessage {
 
     fun toJson(): JSONObject = when (this) {
         is Hello -> JSONObject().put("type", "hello").put("v", SYNC_VERSION).put("id", id).put("nonce", nonce.base64Url())
-        is Pair -> JSONObject().put("type", "pair").put("v", SYNC_VERSION).put("id", id).put("name", name)
+            .put("name", name).put("kind", kind)
+        is Pair -> JSONObject().put("type", "pair").put("v", SYNC_VERSION).put("id", id).put("name", name).put("kind", kind)
             .put("pub", publicKey.base64Url()).put("nonce", nonce.base64Url()).put("proof", proof.base64Url())
         is Error -> JSONObject().put("type", "error").put("reason", reason)
         is State -> JSONObject().put("type", "state").put("sentAt", sentAt).put("state", state.toWire())
@@ -49,8 +57,10 @@ sealed interface SyncMessage {
                     if (o.int("v", 0) != SYNC_VERSION) return UnsupportedVersion
                     val id = o.str("id", "").ifEmpty { return null }
                     val nonce = o.bytes("nonce")?.takeIf { it.size == 16 } ?: return null
-                    if (o.str("type", "") == "hello") return Hello(id, nonce)
-                    Pair(id, o.str("name", ""), o.bytes("pub") ?: return null, nonce, o.bytes("proof") ?: return null)
+                    val name = o.str("name", "")
+                    val kind = o.str("kind", "")
+                    if (o.str("type", "") == "hello") return Hello(id, nonce, name, kind)
+                    Pair(id, name, kind, o.bytes("pub") ?: return null, nonce, o.bytes("proof") ?: return null)
                 }
                 "error" -> Error(o.str("reason", ""))
                 "state" -> {
@@ -96,6 +106,21 @@ fun EngineState.Companion.fromWire(o: JSONObject?): EngineState? {
 /** Moves the sender's times onto the receiver's clock. */
 fun EngineState.shifted(offset: Double): EngineState =
     copy(endsAt = endsAt?.plus(offset), changedAt = SyncRules.shifted(changedAt, offset))
+
+/** What a device is, as `kind` names it on the wire. */
+object DeviceKind {
+    const val MAC = "mac"
+    const val ANDROID = "android"
+
+    /** For the lists of paired devices: "Mac", "Android", "iPhone", "Windows". */
+    fun title(kind: String): String = when (kind) {
+        MAC -> "Mac"
+        ANDROID -> "Android"
+        "ios" -> "iPhone"
+        "windows" -> "Windows"
+        else -> kind.replaceFirstChar(Char::uppercaseChar)
+    }
+}
 
 object SyncRules {
     /** Changes closer than this count as simultaneous, and the Mac wins. */

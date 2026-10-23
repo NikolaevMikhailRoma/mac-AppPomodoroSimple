@@ -3,6 +3,7 @@ import Foundation
 import Network
 import Observation
 import PomodoroCore
+import SystemConfiguration
 
 /// The Mac's side of docs/SYNC.md: listens for paired phones, runs the
 /// pairing QR, and passes timer states between the phones and the timer.
@@ -14,6 +15,8 @@ final class SyncServer {
     static let pairingLifetime: TimeInterval = 120
     /// Dragging the ring changes the state with every mouse move; phones get the newest this often.
     static let sendInterval: TimeInterval = 0.25
+    /// This Mac's name in System Settings → General → Sharing, for the phone's device list.
+    static var macName: String { (SCDynamicStoreCopyComputerName(nil, nil) as String?) ?? "Mac" }
 
     struct Pairing {
         let link: PairLink
@@ -193,17 +196,17 @@ final class SyncServer {
     /// The answer to a phone's first frame: the device key, or the error to send back.
     fileprivate func handshake(_ message: SyncMessage) -> Result<Accepted, HandshakeError> {
         switch message {
-        case .hello(let id, let nonce):
+        case .hello(let id, let nonce, _, _):
             guard let key = devices.key(for: id) else { return .failure(.reason("unknown-device")) }
             return .success(Accepted(id: id, key: key, nonce: nonce))
-        case .pair(let id, let name, let phoneKey, let nonce, let proof):
+        case .pair(let id, let name, let kind, let phoneKey, let nonce, let proof):
             guard let pairing, pairing.expiresAt > Date(),
                   SyncCrypto.proofMatches(proof, token: pairing.link.token,
                                           phonePublicKey: phoneKey, macPublicKey: pairing.link.publicKey),
                   let key = try? SyncCrypto.deviceKey(privateKey: pairing.privateKey,
                                                       peerPublicKey: phoneKey, token: pairing.link.token)
             else { return .failure(.reason("pairing-expired")) }
-            guard devices.add(id: id, name: name, key: key) else { return .failure(.reason("keychain")) }
+            guard devices.add(id: id, name: name, kind: kind, key: key) else { return .failure(.reason("keychain")) }
             // One QR, one phone. After add(): with no phone paired, ending the
             // pairing would stop the listener and drop this very connection.
             endPairing()
@@ -387,7 +390,7 @@ private final class Peer {
             close()
         case .success(let phone):
             let nonceServer = SyncServer.random(16)
-            send(.hello(id: server.devices.macId, nonce: nonceServer))
+            send(.hello(id: server.devices.macId, nonce: nonceServer, name: SyncServer.macName, kind: DeviceKind.mac))
             let keys = SyncCrypto.sessionKeys(deviceKey: phone.key, nonceClient: phone.nonce, nonceServer: nonceServer)
             cipher = SessionCipher(sendKey: keys.s2c, receiveKey: keys.c2s)
             deviceId = phone.id

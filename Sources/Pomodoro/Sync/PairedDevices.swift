@@ -13,6 +13,21 @@ final class PairedDevices {
     struct Device: Codable, Identifiable, Equatable {
         let id: String
         var name: String
+        /// `DeviceKind`; phones paired before kinds existed were all Android.
+        var kind: String
+
+        init(id: String, name: String, kind: String) {
+            self.id = id
+            self.name = name
+            self.kind = kind
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            id = try c.decode(String.self, forKey: .id)
+            name = c.value(.name, or: "Phone")
+            kind = c.value(.kind, or: DeviceKind.android)
+        }
     }
 
     private static let listKey = "SyncDevices"
@@ -49,7 +64,7 @@ final class PairedDevices {
     }
 
     /// False when the Keychain refused the key; the phone then stays unpaired.
-    func add(id: String, name: String, key: SymmetricKey) -> Bool {
+    func add(id: String, name: String, kind: String, key: SymmetricKey) -> Bool {
         SecItemDelete(query(id) as CFDictionary)
         let data = key.withUnsafeBytes { Data($0) }
         let status = SecItemAdd(query(id).merging([
@@ -58,7 +73,11 @@ final class PairedDevices {
         ]) { a, _ in a } as CFDictionary, nil)
         guard status == errSecSuccess else { return false }
         list.removeAll { $0.id == id }
-        list.append(Device(id: id, name: name.isEmpty ? "Phone" : String(name.prefix(40))))
+        list.append(Device(
+            id: id,
+            name: name.isEmpty ? "Phone" : String(name.prefix(40)),
+            kind: kind.isEmpty ? DeviceKind.android : String(kind.prefix(20))
+        ))
         save()
         return true
     }

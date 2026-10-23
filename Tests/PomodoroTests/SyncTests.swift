@@ -173,13 +173,18 @@ struct SyncWireTests {
     @Test("hello, pair and a version from the future")
     func handshake() {
         let nonce = Data(count: 16)
-        for m in [SyncMessage.hello(id: "a", nonce: nonce),
-                  .pair(id: "a", name: "phone", publicKey: Data(count: 65), nonce: nonce, proof: Data(count: 32)),
+        for m in [SyncMessage.hello(id: "a", nonce: nonce, name: "MacBook", kind: DeviceKind.mac),
+                  .pair(id: "a", name: "phone", kind: DeviceKind.android, publicKey: Data(count: 65), nonce: nonce, proof: Data(count: 32)),
                   .error("unknown-device"), .unpair, .ping] {
             #expect(SyncMessage(data: m.data) == m)
         }
         #expect(SyncMessage(data: Data(#"{"type":"hello","v":2,"id":"a"}"#.utf8)) == .unsupportedVersion)
         #expect(SyncMessage(data: Data(#"{"type":"later"}"#.utf8)) == .unknown)
+        // An older build sends no name or kind.
+        #expect(SyncMessage(data: Data(#"{"type":"hello","v":1,"id":"a","nonce":"AAAAAAAAAAAAAAAAAAAAAA"}"#.utf8))
+                == .hello(id: "a", nonce: Data(count: 16)))
+        #expect(DeviceKind.title("android") == "Android")
+        #expect(DeviceKind.title("ios") == "iPhone")
         #expect(SyncMessage(data: Data("not json".utf8)) == nil)
     }
 

@@ -162,11 +162,16 @@ class SyncWireTest {
     @Test
     fun handshakeMessagesRoundTrip() {
         val nonce = ByteArray(16) { it.toByte() }
-        val hello = SyncMessage.decode(SyncMessage.Hello("a", nonce).encode()) as SyncMessage.Hello
+        val hello = SyncMessage.decode(SyncMessage.Hello("a", nonce, "MacBook", DeviceKind.MAC).encode()) as SyncMessage.Hello
         assertEquals("a", hello.id)
         assertArrayEquals(nonce, hello.nonce)
-        val pair = SyncMessage.decode(SyncMessage.Pair("a", "phone", ByteArray(65), nonce, ByteArray(32)).encode())
-        assertTrue(pair is SyncMessage.Pair)
+        assertEquals("MacBook", hello.name)
+        assertEquals("Mac", DeviceKind.title(hello.kind))
+        val pair = SyncMessage.decode(SyncMessage.Pair("a", "phone", DeviceKind.ANDROID, ByteArray(65), nonce, ByteArray(32)).encode())
+        assertEquals(DeviceKind.ANDROID, (pair as SyncMessage.Pair).kind)
+        // An older build sends no name or kind.
+        val old = SyncMessage.decode("{\"type\":\"hello\",\"v\":1,\"id\":\"a\",\"nonce\":\"AAAAAAAAAAAAAAAAAAAAAA\"}".toByteArray())
+        assertEquals("", (old as SyncMessage.Hello).kind)
         assertEquals(SyncMessage.Error("unknown-device"), SyncMessage.decode(SyncMessage.Error("unknown-device").encode()))
         assertEquals(SyncMessage.Unpair, SyncMessage.decode(SyncMessage.Unpair.encode()))
         assertEquals(SyncMessage.UnsupportedVersion, SyncMessage.decode("""{"type":"hello","v":2,"id":"a"}""".toByteArray()))

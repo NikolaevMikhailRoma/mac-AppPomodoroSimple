@@ -32,7 +32,7 @@ struct DevicesTab: View {
                     .padding(.bottom, metrics.sectionBottomPadding)
             }
             ForEach(sync.devices.list) { device in
-                FormRow(label: device.name, metrics: metrics) {
+                FormRow(label: "\(device.name) (\(DeviceKind.title(device.kind)))", metrics: metrics) {
                     if sync.connected.contains(device.id) { hint("Connected") }
                     Button("Remove") { sync.remove(device.id) }
                 }
@@ -47,7 +47,7 @@ struct DevicesTab: View {
             QRCode(text: pairing.link.link)
                 .frame(width: Self.qrSize, height: Self.qrSize)
             VStack(alignment: .leading, spacing: metrics.rowSpacing) {
-                Text("On the phone, open Pomodoro → Settings → Pair with Mac and point the camera here.")
+                Text("On the phone, open Pomodoro → Settings → Devices → Pair with Mac and point the camera here.")
                     .font(.system(size: metrics.labelSize))
                     .foregroundStyle(Theme.swiftUIColor(metrics.labelColor, fallback: .labelColor))
                     .fixedSize(horizontal: false, vertical: true)

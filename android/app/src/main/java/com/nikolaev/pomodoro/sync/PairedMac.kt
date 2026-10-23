@@ -28,6 +28,18 @@ class PairedMac(context: Context) {
 
     val macId: String? get() = prefs.getString(KEY_MAC_ID, null)
 
+    /** How the Mac called itself last time, "MacBook Pro" and "mac"; null before it said. */
+    val macName: String? get() = prefs.getString(KEY_MAC_NAME, null)
+    val macKind: String? get() = prefs.getString(KEY_MAC_KIND, null)
+
+    fun saveIdentity(name: String, kind: String) {
+        if (name.isEmpty()) return
+        prefs.edit {
+            putString(KEY_MAC_NAME, name.take(40))
+            putString(KEY_MAC_KIND, kind.take(20))
+        }
+    }
+
     /** The last address the Mac answered on, for when discovery finds nothing. */
     val lastAddress: Pair<String, Int>? get() {
         val host = prefs.getString(KEY_HOST, null) ?: return null
@@ -66,6 +78,8 @@ class PairedMac(context: Context) {
     fun forget() {
         prefs.edit {
             remove(KEY_MAC_ID)
+            remove(KEY_MAC_NAME)
+            remove(KEY_MAC_KIND)
             remove(KEY_DEVICE_KEY)
             remove(KEY_HOST)
             remove(KEY_PORT)
@@ -97,6 +111,8 @@ class PairedMac(context: Context) {
         private const val IV_SIZE = 12
         private const val KEY_PHONE_ID = "phoneId"
         private const val KEY_MAC_ID = "macId"
+        private const val KEY_MAC_NAME = "macName"
+        private const val KEY_MAC_KIND = "macKind"
         private const val KEY_DEVICE_KEY = "deviceKey"
         private const val KEY_HOST = "host"
         private const val KEY_PORT = "port"

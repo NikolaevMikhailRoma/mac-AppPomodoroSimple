@@ -45,10 +45,15 @@ The two hello frames are plain JSON. Every frame after them is encrypted.
 The client sends one of:
 
 ```json
-{"type": "hello", "v": 1, "id": "<phone id>", "nonce": "<16 bytes>"}
-{"type": "pair", "v": 1, "id": "<phone id>", "name": "motorola edge 50",
- "pub": "<phone public key>", "nonce": "<16 bytes>", "proof": "<32 bytes>"}
+{"type": "hello", "v": 1, "id": "<phone id>", "nonce": "<16 bytes>",
+ "name": "motorola edge 50 fusion", "kind": "android"}
+{"type": "pair", "v": 1, "id": "<phone id>", "name": "motorola edge 50 fusion",
+ "kind": "android", "pub": "<phone public key>", "nonce": "<16 bytes>", "proof": "<32 bytes>"}
 ```
+
+`name` and `kind` say what the device is, for the lists of paired devices:
+`kind` is `mac`, `android`, later `ios` or `windows`. Both may be missing
+(an older build); the receiver then shows what it stored before.
 
 `pair` is sent once, right after scanning:
 
@@ -62,7 +67,8 @@ name.
 The server answers with:
 
 ```json
-{"type": "hello", "v": 1, "id": "<mac id>", "nonce": "<16 bytes>"}
+{"type": "hello", "v": 1, "id": "<mac id>", "nonce": "<16 bytes>",
+ "name": "MacBook Pro", "kind": "mac"}
 ```
 
 or with an error and closes the connection:
