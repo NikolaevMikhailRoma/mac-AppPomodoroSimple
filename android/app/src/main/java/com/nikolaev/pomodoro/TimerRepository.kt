@@ -64,9 +64,10 @@ class TimerRepository(context: Context) {
 
     init {
         engine.rollOverDay(today())
-        // Catches up with a timer that ran out while the process was dead, and
-        // puts back the alarm a force-stop or an app update removed.
-        handle(engine.update(now()))
+        // Puts back the alarm a force-stop or an app update removed. A timer
+        // that ran out while the process was dead gets an alarm in the past,
+        // which fires at once: the alarm, not this, plays the sound, so the
+        // paired Mac is asked first (AlarmReceiver).
         publish(force = true)
     }
 

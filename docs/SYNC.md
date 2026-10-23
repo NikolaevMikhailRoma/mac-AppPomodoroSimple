@@ -189,3 +189,15 @@ has a paired phone or the pairing QR is on screen.
 
 The phone looks for the service whose `id` is its Mac's, and falls back to
 the last address that worked.
+
+## While the phone app is closed
+
+The phone keeps a connection only while the app is on screen. Two things
+happen while it is closed, each with a short connection to the last address
+that worked, within 2.5 seconds, without discovery:
+
+- the pause/resume button in the notification: the phone sends its state
+  and takes the Mac's;
+- the end of an interval: before it rings, the phone takes the Mac's state.
+  If the Mac paused or moved the timer, the phone follows it and stays
+  silent; if the Mac cannot be reached, the phone rings as before.

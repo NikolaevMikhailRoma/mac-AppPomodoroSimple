@@ -6,6 +6,7 @@ import android.net.nsd.NsdServiceInfo
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import com.nikolaev.pomodoro.TimerRepository
 import com.nikolaev.pomodoro.core.DeviceKind
 import com.nikolaev.pomodoro.core.EngineState
@@ -90,8 +91,60 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
 
     /** True while the app is on screen: only then does the phone keep a connection. */
     fun setActive(on: Boolean) {
+        Log.i(TAG, if (on) "app on screen" else "app off screen")
         // A worker that gave up (a failed pairing, a refusal) is started again on the next return.
         if (!on) stop() else if (store.macId != null && worker?.isAlive != true) start(null)
+    }
+
+    /**
+     * For the notification button and the alarm while the app is closed: a
+     * short connection to the last address that worked, which sends this
+     * phone's state and takes the Mac's. [done] runs on the main thread, after
+     * the Mac's state is applied, at most about [QUICK_LIMIT_MS] later. Without
+     * the Mac on the network it just runs [done]; nothing waits on discovery.
+     */
+    fun quickSync(done: () -> Unit) {
+        if (connection != null || store.macId == null) return done()
+        Thread({
+            try {
+                quickExchange()
+                Log.i(TAG, "quick sync done")
+            } catch (e: Exception) {
+                // No Mac this time: the phone keeps its own state.
+                Log.i(TAG, "quick sync failed: $e")
+            } finally {
+                main.post(done)
+            }
+        }, "sync-quick").start()
+    }
+
+    private fun quickExchange() {
+        val macId = store.macId ?: return
+        val key = store.deviceKey() ?: return
+        val (host, port) = store.lastAddress ?: return
+        val socket = Socket().apply {
+            connect(InetSocketAddress(host, port), QUICK_CONNECT_MS)
+            soTimeout = QUICK_LIMIT_MS - QUICK_CONNECT_MS
+        }
+        val c = Connection(socket, host, port)
+        try {
+            val nonce = PairedMac.randomBytes(16)
+            c.trySend(SyncMessage.Hello(store.phoneId, nonce, Build.MODEL, DeviceKind.ANDROID))
+            val mac = c.startSession(macId, key, nonce)
+            store.saveIdentity(mac.name, mac.kind)
+            val settings = timer.settings.value
+            c.trySend(SyncMessage.State(timer.state.value, now()))
+            c.trySend(SyncMessage.Intervals(settings.intervals, settings.intervalsChangedAt, now()))
+            // The Mac sends its state right after the hello; that is all this needs.
+            while (true) {
+                val message = c.read()
+                val receivedAt = now()
+                main.post { handle(message, receivedAt) }
+                if (message is SyncMessage.State) break
+            }
+        } finally {
+            c.close()
+        }
     }
 
     fun pair(link: PairLink) {
@@ -137,6 +190,7 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
                 c = if (link != null) pairWith(link) else connect() ?: throw IOException("not found")
                 link = null
                 delay = 1_000L
+                Log.i(TAG, "connected to ${c.host}:${c.port}")
                 setStatus(Status.Connected)
                 c.trySend(SyncMessage.State(timer.state.value, now()))
                 val settings = timer.settings.value
@@ -147,9 +201,11 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
                     main.post { handle(message, receivedAt) }
                 }
             } catch (refused: Refused) {
+                Log.i(TAG, "refused: ${refused.message}")
                 setStatus(Status.Failed(refused.message ?: ""))
                 return
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.i(TAG, "connection ended: $e")
                 if (link != null) {
                     setStatus(Status.Failed("Could not reach the Mac. Check that both are on the same Wi-Fi."))
                     return
@@ -179,6 +235,7 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
         val proof = SyncCrypto.proof(link.token, phoneKey, link.publicKey)
         c.trySend(SyncMessage.Pair(store.phoneId, Build.MODEL, DeviceKind.ANDROID, phoneKey, nonce, proof))
         val mac = c.startSession(link.macId, deviceKey, nonce)
+        c.settle()
         // Only the Mac that showed the QR can derive the key: a first frame
         // that decrypts proves it is that Mac. Store the key only then.
         val first = c.read()
@@ -189,16 +246,31 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
         return c
     }
 
+    /**
+     * Tries each address until one answers the hello: an address can take the
+     * connection and still say nothing (a Mac waiting on its Local Network
+     * permission, an old address now someone else's).
+     */
     private fun connect(): Connection? {
         val macId = store.macId ?: return null
         val key = store.deviceKey() ?: throw Refused("This phone lost its key. Forget the Mac and pair again.")
-        val c = open(listOfNotNull(discover(macId), store.lastAddress).distinct()) ?: return null
-        val nonce = PairedMac.randomBytes(16)
-        c.trySend(SyncMessage.Hello(store.phoneId, nonce, Build.MODEL, DeviceKind.ANDROID))
-        val mac = c.startSession(macId, key, nonce)
-        store.saveAddress(c.host, c.port)
-        store.saveIdentity(mac.name, mac.kind)
-        return c
+        for (target in listOfNotNull(discover(macId), store.lastAddress).distinct()) {
+            val c = open(listOf(target)) ?: continue
+            try {
+                val nonce = PairedMac.randomBytes(16)
+                c.trySend(SyncMessage.Hello(store.phoneId, nonce, Build.MODEL, DeviceKind.ANDROID))
+                val mac = c.startSession(macId, key, nonce)
+                c.settle()
+                store.saveAddress(c.host, c.port)
+                store.saveIdentity(mac.name, mac.kind)
+                return c
+            } catch (e: IOException) {
+                Log.i(TAG, "no answer at ${c.host}:${c.port}: $e")
+                c.close()
+                if (connection === c) connection = null
+            }
+        }
+        return null
     }
 
     private fun open(targets: List<Pair<String, Int>>): Connection? {
@@ -207,7 +279,8 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
             try {
                 val socket = Socket().apply {
                     connect(InetSocketAddress(host, port), 3_000)
-                    soTimeout = (SILENCE_LIMIT * 1000).toInt()
+                    // Until the hello: a Mac that takes the connection but says nothing.
+                    soTimeout = HANDSHAKE_LIMIT_MS
                 }
                 // A connect cannot be interrupted: a worker stopped during it must not take over.
                 synchronized(this) {
@@ -320,6 +393,11 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
             }
         }
 
+        /** After the hello: from now on silence means a lost connection only after [SILENCE_LIMIT]. */
+        fun settle() {
+            socket.soTimeout = (SILENCE_LIMIT * 1000).toInt()
+        }
+
         fun read(): SyncMessage {
             val length = input.readInt()
             Frames.checkLength(length)
@@ -347,10 +425,14 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
     }
 
     private companion object {
+        const val TAG = "PomodoroSync"
         const val SERVICE_TYPE = "_pomodoro._tcp"
         const val PING_AFTER = 20.0
         const val SEND_INTERVAL = 0.1
+        const val QUICK_CONNECT_MS = 1_000
+        const val QUICK_LIMIT_MS = 2_500
         const val SILENCE_LIMIT = 60.0
+        const val HANDSHAKE_LIMIT_MS = 5_000
 
         fun now(): Double = System.currentTimeMillis() / 1000.0
     }
