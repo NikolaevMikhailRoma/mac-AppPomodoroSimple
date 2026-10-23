@@ -24,6 +24,8 @@ data class EngineState(
     val sinceLongBreak: Int,
     /** Days since the epoch in local time, for resetting the daily count. */
     val countedDay: Long,
+    /** When the state last changed: a button, or the moment an interval ran out (docs/SYNC.md). */
+    val changedAt: Double = 0.0,
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("phase", phase.key)
@@ -34,6 +36,7 @@ data class EngineState(
         .put("endsAt", endsAt ?: JSONObject.NULL)
         .put("sinceLongBreak", sinceLongBreak)
         .put("countedDay", countedDay)
+        .put("changedAt", changedAt)
 
     companion object {
         fun initial(settings: IntervalSettings, day: Long) = EngineState(
@@ -64,6 +67,7 @@ data class EngineState(
                 endsAt = if (runState == RunState.RUNNING) endsAt else null,
                 sinceLongBreak = o.int("sinceLongBreak", 0).coerceAtLeast(0),
                 countedDay = o.long("countedDay", 0),
+                changedAt = o.num("changedAt", 0.0),
             )
         }
     }
@@ -88,20 +92,22 @@ class PomodoroEngine(
     fun start(now: Double) {
         if (runState == RunState.RUNNING) return
         val left = if (remaining <= 0) phaseDuration else remaining
-        state = state.copy(runState = RunState.RUNNING, remaining = left, endsAt = now + left)
+        state = state.copy(runState = RunState.RUNNING, remaining = left, endsAt = now + left, changedAt = now)
     }
 
     fun pause(now: Double) {
         if (runState != RunState.RUNNING) return
         val left = maxOf(0.0, (state.endsAt ?: now) - now)
-        state = state.copy(runState = RunState.PAUSED, remaining = left, endsAt = null)
+        state = state.copy(runState = RunState.PAUSED, remaining = left, endsAt = null, changedAt = now)
     }
 
     fun toggle(now: Double) = if (runState == RunState.RUNNING) pause(now) else start(now)
 
-    fun stop() {
+    fun stop(now: Double) {
         val duration = settings.duration(phase)
-        state = state.copy(runState = RunState.IDLE, phaseDuration = duration, remaining = duration, endsAt = null)
+        state = state.copy(
+            runState = RunState.IDLE, phaseDuration = duration, remaining = duration, endsAt = null, changedAt = now,
+        )
     }
 
     /**
@@ -109,19 +115,19 @@ class PomodoroEngine(
      * how the user adds an interval worked without the timer. Dropping work
      * without counting it is stop().
      */
-    fun skip(now: Double): List<EngineEvent> = advance(now)
+    fun skip(now: Double): List<EngineEvent> = advance(now, changedAt = now)
 
     fun setPhaseDuration(seconds: Double, now: Double) {
         val duration = maxOf(1.0, seconds)
         val endsAt = if (runState == RunState.RUNNING) now + duration else null
-        state = state.copy(phaseDuration = duration, remaining = duration, endsAt = endsAt)
+        state = state.copy(phaseDuration = duration, remaining = duration, endsAt = endsAt, changedAt = now)
     }
 
-    fun applySettings(new: IntervalSettings) {
+    fun applySettings(new: IntervalSettings, now: Double) {
         settings = new
-        if (runState != RunState.IDLE) return
         val duration = new.duration(phase)
-        state = state.copy(phaseDuration = duration, remaining = duration)
+        if (runState != RunState.IDLE || duration == phaseDuration) return
+        state = state.copy(phaseDuration = duration, remaining = duration, changedAt = now)
     }
 
     /** Resets the daily count the first time it is called on a new day. */
@@ -130,14 +136,21 @@ class PomodoroEngine(
         state = state.copy(countedDay = day, completedToday = 0, sinceLongBreak = 0)
     }
 
+    /** The Mac's state, already on this phone's clock. Plays nothing: the Mac did that. */
+    fun adopt(new: EngineState) {
+        state = new
+    }
+
     fun update(now: Double): List<EngineEvent> {
         val end = state.endsAt
         if (runState != RunState.RUNNING || end == null) return emptyList()
         state = state.copy(remaining = maxOf(0.0, end - now))
-        return if (remaining > 0) emptyList() else advance(now)
+        // Changed at the moment it ran out, not when the alarm fired: the Mac
+        // gets the same time. The next interval starts now, though.
+        return if (remaining > 0) emptyList() else advance(now, changedAt = end)
     }
 
-    private fun advance(now: Double): List<EngineEvent> {
+    private fun advance(now: Double, changedAt: Double): List<EngineEvent> {
         val finished = phase
         var completed = state.completedToday
         var sinceLongBreak = state.sinceLongBreak
@@ -164,6 +177,7 @@ class PomodoroEngine(
             completedToday = completed,
             endsAt = if (autoStartNextInterval) now + duration else null,
             sinceLongBreak = sinceLongBreak,
+            changedAt = changedAt,
         )
         return listOf(EngineEvent.PhaseFinished(finished), EngineEvent.PhaseStarted(next))
     }

@@ -63,7 +63,7 @@ class CountdownTest {
         val e = engine()
         e.start(T0)
         e.update(T0 + 600)
-        e.stop()
+        e.stop(T0)
         assertEquals(RunState.IDLE, e.runState)
         assertEquals(25 * 60.0, e.remaining, 0.0)
     }
@@ -74,7 +74,7 @@ class CountdownTest {
         e.setPhaseDuration(15.0, T0)
         e.start(T0)
         assertEquals(15.0, e.remaining, 0.0)
-        e.stop()
+        e.stop(T0)
         assertEquals(25 * 60.0, e.phaseDuration, 0.0)
         assertEquals(25 * 60.0, e.remaining, 0.0)
     }
@@ -207,13 +207,13 @@ class EditingTest {
     @Test
     fun newSettingsResizeAnIdlePhaseButNeverARunningOne() {
         val idle = engine()
-        idle.applySettings(IntervalSettings(workMinutes = 50.0))
+        idle.applySettings(IntervalSettings(workMinutes = 50.0), T0)
         assertEquals(50 * 60.0, idle.remaining, 0.0)
 
         val running = engine()
         running.start(T0)
         running.update(T0 + 60)
-        running.applySettings(IntervalSettings(workMinutes = 50.0))
+        running.applySettings(IntervalSettings(workMinutes = 50.0), T0)
         assertEquals(24 * 60.0, running.remaining, 0.0)
     }
 }

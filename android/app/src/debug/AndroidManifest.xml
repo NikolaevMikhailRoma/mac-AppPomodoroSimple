@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: pairs the emulator, which has no camera to read the QR,
+     with `adb shell am start -d '<link from the Mac>'`. Release builds take the
+     link from the scanner alone, so no other app or web page can start a pairing. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="pomodoro" android:host="pair" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -23,5 +23,13 @@
     <!-- Menu bar app: no Dock icon, no main window. -->
     <key>LSUIElement</key>
     <true/>
+    <!-- Pairing and syncing with Pomodoro on the phone (docs/SYNC.md). macOS asks
+         once, when a phone is first paired. -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Pomodoro talks to your paired phone over your Wi-Fi to keep both timers in sync.</string>
+    <key>NSBonjourServices</key>
+    <array>
+        <string>_pomodoro._tcp</string>
+    </array>
 </dict>
 </plist>

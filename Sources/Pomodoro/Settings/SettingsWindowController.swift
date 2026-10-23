@@ -7,8 +7,12 @@ import PomodoroConfig
 final class SettingsWindowController {
     let window: NSWindow
     private let loginItem: LoginItem
+    private var closeObserver: NSObjectProtocol?
 
-    init(store: SettingsStore, loginItem: LoginItem, config: AppConfig, tab: SettingsTab = .general) {
+    private let sync: SyncServer?
+
+    init(store: SettingsStore, loginItem: LoginItem, config: AppConfig, sync: SyncServer? = nil, tab: SettingsTab = .general) {
+        self.sync = sync
         self.loginItem = loginItem
         let metrics = config.settingsWindow
         window = NSWindow(
@@ -21,8 +25,14 @@ final class SettingsWindowController {
         window.isReleasedWhenClosed = false
         window.backgroundColor = Theme.color(metrics.background, fallback: .windowBackgroundColor)
         window.center()
+        // A pairing QR must not stay valid behind a closed window.
+        closeObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification, object: window, queue: .main
+        ) { [weak sync] _ in
+            MainActor.assumeIsolated { sync?.endPairing() }
+        }
         window.contentView = NSHostingView(
-            rootView: SettingsView(store: store, loginItem: loginItem, config: config, tab: tab)
+            rootView: SettingsView(store: store, loginItem: loginItem, config: config, sync: sync, tab: tab)
         )
     }
 

@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var timer: TimerController!
     private var statusItem: StatusItemController!
     private var settingsWindow: SettingsWindowController!
+    private var sync: SyncServer!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let config = AppConfig.load()
@@ -17,7 +18,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Durations saved earlier may be longer than today's upper bound.
         settingsStore.settings.intervals = config.dial.dial.clamp(intervals: settingsStore.settings.intervals)
         timer = TimerController(config: config, settings: settingsStore.settings)
-        settingsWindow = SettingsWindowController(store: settingsStore, loginItem: LoginItem(), config: config)
+        sync = SyncServer(devices: PairedDevices())
+        sync.currentState = { [weak self] in self?.timer.engine.state }
+        sync.onState = { [weak self] state in self?.timer.receive(state) }
+        timer.onStateChange = { [weak self] state in self?.sync.broadcast(state) }
+        #if DEBUG
+        if CommandLine.arguments.contains("--pair") { sync.beginPairing() }
+        #endif
+        settingsWindow = SettingsWindowController(store: settingsStore, loginItem: LoginItem(), config: config, sync: sync)
 
         settingsStore.onChange = { [weak self] settings in
             self?.timer.apply(settings)

@@ -12,12 +12,14 @@ final class TimerController {
     let dial: DurationDial
 
     @ObservationIgnored var onChange: (() -> Void)?
+    /// A new state for the phones: after a button, an interval running out, or a state taken from a phone.
+    @ObservationIgnored var onStateChange: ((EngineState) -> Void)?
 
     @ObservationIgnored private var ticker: Timer?
     @ObservationIgnored private var sound: SoundPlayer
     @ObservationIgnored private var notifier = Notifier()
     @ObservationIgnored private var settings: Settings
-    @ObservationIgnored private var countedDay: Date
+    @ObservationIgnored private var sentChangedAt: Date?
 
     init(config: AppConfig, settings: Settings) {
         self.settings = settings
@@ -27,7 +29,6 @@ final class TimerController {
             settings: settings.intervals,
             autoStartNextInterval: settings.general.autoStartNextInterval
         )
-        self.countedDay = Calendar.current.startOfDay(for: Date())
         notifier.requestPermission()
     }
 
@@ -76,6 +77,16 @@ final class TimerController {
         return seconds > dial.maxSeconds
     }
 
+    /// A phone's state, already on this Mac's clock (docs/SYNC.md, Merging).
+    func receive(_ remote: EngineState) {
+        guard SyncRules.shouldAdopt(local: engine.state.changedAt, remote: remote.changedAt, receiverIsMac: true) else {
+            return
+        }
+        engine.adopt(remote)
+        syncTicker()
+        changed()
+    }
+
     func apply(_ new: Settings) {
         settings = new
         sound.settings = new.sound
@@ -113,11 +124,13 @@ final class TimerController {
     }
 
     private func rollOverDayIfNeeded() {
-        let today = Calendar.current.startOfDay(for: Date())
-        guard today != countedDay else { return }
-        countedDay = today
-        engine.resetDailyCount()
+        engine.rollOverDay(EngineState.day(of: Date()))
     }
 
-    private func changed() { onChange?() }
+    private func changed() {
+        onChange?()
+        guard engine.state.changedAt != sentChangedAt else { return }
+        sentChangedAt = engine.state.changedAt
+        onStateChange?(engine.state)
+    }
 }

@@ -8,6 +8,7 @@ import com.nikolaev.pomodoro.core.EngineState
 import com.nikolaev.pomodoro.core.PomodoroEngine
 import com.nikolaev.pomodoro.core.RunState
 import com.nikolaev.pomodoro.core.Settings
+import com.nikolaev.pomodoro.core.SyncRules
 import com.nikolaev.pomodoro.core.TimeFormat
 import com.nikolaev.pomodoro.system.AlarmScheduler
 import com.nikolaev.pomodoro.system.Notifier
@@ -52,6 +53,10 @@ class TimerRepository(context: Context) {
     /** What was last saved and shown in the notification; see [publish]. */
     private var published: EngineState? = null
 
+    /** A new state for the Mac: after a button or an interval running out, not after taking the Mac's. */
+    var onStateChange: ((EngineState) -> Unit)? = null
+    private var sentChangedAt: Double? = null
+
     init {
         engine.rollOverDay(today())
         // Catches up with a timer that ran out while the process was dead, and
@@ -67,7 +72,7 @@ class TimerRepository(context: Context) {
     }
 
     fun stop() {
-        engine.stop()
+        engine.stop(now())
         publish()
     }
 
@@ -97,6 +102,14 @@ class TimerRepository(context: Context) {
         alarms.sync(engine.state)
     }
 
+    /** The Mac's state, already on this phone's clock (docs/SYNC.md, Merging). */
+    fun receive(remote: EngineState) {
+        if (!SyncRules.shouldAdopt(engine.state.changedAt, remote.changedAt, receiverIsMac = false)) return
+        engine.adopt(remote)
+        sentChangedAt = remote.changedAt
+        publish()
+    }
+
     fun updateSettings(new: Settings) {
         val old = _settings.value
         val clamped = new.copy(intervals = dial.clampIntervals(new.intervals))
@@ -104,7 +117,7 @@ class TimerRepository(context: Context) {
         _settings.value = clamped
         prefs.edit { putString(KEY_SETTINGS, clamped.toJson().toString()) }
         engine.autoStartNextInterval = clamped.general.autoStartNextInterval
-        engine.applySettings(clamped.intervals)
+        engine.applySettings(clamped.intervals, now())
         // Only "show timer in notifications" changes the notification without changing the state.
         publish(force = clamped.general != old.general)
     }
@@ -151,6 +164,10 @@ class TimerRepository(context: Context) {
     private fun publish(force: Boolean = false) {
         val state = engine.state
         _state.value = state
+        if (state.changedAt != sentChangedAt) {
+            sentChangedAt = state.changedAt
+            onStateChange?.invoke(state)
+        }
         val structural = if (state.runState == RunState.RUNNING) state.copy(remaining = 0.0) else state
         if (!force && structural == published) return
         published = structural

@@ -235,13 +235,16 @@ struct EditingTests {
         #expect(running.remaining == 24 * 60)
     }
 
-    @Test("resetDailyCount clears the counter")
+    @Test("the daily count resets on a new day only")
     func resetsCount() {
         var e = engine()
+        e.rollOverDay("2026-10-23")
         e.start(now: t0)
         _ = e.update(now: t0.addingTimeInterval(25 * 60))
         #expect(e.completedToday == 1)
-        e.resetDailyCount()
+        e.rollOverDay("2026-10-23")
+        #expect(e.completedToday == 1)
+        e.rollOverDay("2026-10-24")
         #expect(e.completedToday == 0)
     }
 }

@@ -1,0 +1,154 @@
+{
+  "about": "Test vectors for docs/SYNC.md. Crypto values come from Python's cryptography package, independent of both apps.",
+  "crypto": {
+    "macPrivate": "NIpin1zu0DLD6HBuxH2b-vsA-0JQsBjdllQ1ylDLg24",
+    "macPublic": "BEdhPzot7Yqm5LP2xVNaiqZ-CUPErx9giJZM1LrE0ewSC2H_0Qi6zSmEh5YG1eyEvpTdFPG5_jBC_vFPE0z8tOk",
+    "phonePrivate": "RVadpX9Le_Ry16hk70eBRRyuY4P-6fsK5AxZqhzkdbc",
+    "phonePublic": "BAB0oRqCNtyZnZgKu8ht8ihZXNux91_93laMiOVgso17-FS0w1p8zI8puwXommwaMFNe_Me2_Z4xCKFeGYutEMQ",
+    "token": "AAECAwQFBgcICQoLDA0ODw",
+    "nonceClient": "wMHCw8TFxsfIycrLzM3Ozw",
+    "nonceServer": "UFFSU1RVVldYWVpbXF1eXw",
+    "sharedSecret": "9HJHmyMPrOgRA6eb3k4X6Hu55hejchS3k1Bf2X6faZA",
+    "deviceKey": "AzyNqGShKv1GXJ0IpR2dfTEDAxrWvBoWETQVQE7zzKI",
+    "proof": "UNtHjj_uPYB8iSMW-mFx5ophXGIMZdhUZfJxLc-CVaY",
+    "c2s": "_MDWXQkqnUk-28B3lYTmnrO6yoNfk8SC4MrwR5j3m70",
+    "s2c": "K6bHRujPQLR0aCemg1igAPXQwXWZrecpQ3D0MnTitEY",
+    "frames": [
+      {
+        "key": "c2s",
+        "counter": 0,
+        "plaintext": "{\"type\":\"ping\"}",
+        "payload": "ncU8IEAWvlfJW14hTALl5GbxLx4AIzo264xEp5_sXQ"
+      },
+      {
+        "key": "c2s",
+        "counter": 1,
+        "plaintext": "{\"type\":\"unpair\"}",
+        "payload": "0ALmQstAxo64XIdWUUdFCOth4VEMvCuANzK1gHuo42Az"
+      },
+      {
+        "key": "s2c",
+        "counter": 0,
+        "plaintext": "{\"type\":\"ping\"}",
+        "payload": "K-3Timz1mSB_qOWIo5Xq7ZfTrVM-vbRTH2uH9Y7eDA"
+      }
+    ]
+  },
+  "pairLink": {
+    "valid": {
+      "link": "pomodoro://pair?v=1&id=AAAAAAAAAAAAAAAAAAAAAA&k=BEdhPzot7Yqm5LP2xVNaiqZ-CUPErx9giJZM1LrE0ewSC2H_0Qi6zSmEh5YG1eyEvpTdFPG5_jBC_vFPE0z8tOk&t=AAECAwQFBgcICQoLDA0ODw&a=192.168.1.5,10.0.0.7&p=52025",
+      "id": "AAAAAAAAAAAAAAAAAAAAAA",
+      "publicKey": "BEdhPzot7Yqm5LP2xVNaiqZ-CUPErx9giJZM1LrE0ewSC2H_0Qi6zSmEh5YG1eyEvpTdFPG5_jBC_vFPE0z8tOk",
+      "token": "AAECAwQFBgcICQoLDA0ODw",
+      "addresses": [
+        "192.168.1.5",
+        "10.0.0.7"
+      ],
+      "port": 52025
+    },
+    "invalid": [
+      "https://example.com/pair?v=1",
+      "pomodoro://pair?v=2&id=AAAAAAAAAAAAAAAAAAAAAA&k=BEdhPzot7Yqm5LP2xVNaiqZ-CUPErx9giJZM1LrE0ewSC2H_0Qi6zSmEh5YG1eyEvpTdFPG5_jBC_vFPE0z8tOk&t=AAECAwQFBgcICQoLDA0ODw&a=192.168.1.5,10.0.0.7&p=52025",
+      "pomodoro://pair?v=1&id=AAAAAAAAAAAAAAAAAAAAAA&t=AAECAwQFBgcICQoLDA0ODw&a=192.168.1.5,10.0.0.7&p=52025",
+      "pomodoro://pair?v=1&id=AAAAAAAAAAAAAAAAAAAAAA&k=BEdhPzot7Yqm5LP2xVNaiqZ-CUPErx9giJZM1LrE0ewSC2H_0Qi6zSmEh5YG1eyEvpTdFPG5_jBC_vFPE0z8tOk&t=AAEC&a=192.168.1.5,10.0.0.7&p=52025",
+      "pomodoro://pair?v=1&id=AAAAAAAAAAAAAAAAAAAAAA&k=BEdhPzot7Yqm5LP2xVNaiqZ-CUPErx9giJZM1LrE0ewSC2H_0Qi6zSmEh5YG1eyEvpTdFPG5_jBC_vFPE0z8tOk&t=AAECAwQFBgcICQoLDA0ODw&a=192.168.1.5,10.0.0.7&p=70000",
+      "pomodoro://pair?test=1"
+    ]
+  },
+  "shift": {
+    "sentAt": 1000.0,
+    "receivedAt": 1003.5,
+    "remote": {
+      "endsAt": 1500.0,
+      "changedAt": 900.0
+    },
+    "local": {
+      "endsAt": 1503.5,
+      "changedAt": 903.5
+    }
+  },
+  "state": {
+    "json": "{\"phase\":\"shortBreak\",\"runState\":\"running\",\"phaseDuration\":300,\"remaining\":300,\"endsAt\":1792761800.5,\"completedToday\":3,\"sinceLongBreak\":3,\"day\":\"2026-10-23\",\"changedAt\":1792761500.5}",
+    "phase": "shortBreak",
+    "runState": "running",
+    "phaseDuration": 300,
+    "remaining": 300,
+    "endsAt": 1792761800.5,
+    "completedToday": 3,
+    "sinceLongBreak": 3,
+    "day": "2026-10-23",
+    "changedAt": 1792761500.5
+  },
+  "merge": [
+    {
+      "receiver": "phone",
+      "local": 100,
+      "remote": 100,
+      "adopt": true,
+      "why": "a tie goes to the Mac"
+    },
+    {
+      "receiver": "phone",
+      "local": 100,
+      "remote": 99.5,
+      "adopt": true,
+      "why": "within 1 s the Mac wins"
+    },
+    {
+      "receiver": "phone",
+      "local": 100,
+      "remote": 98.9,
+      "adopt": false,
+      "why": "the phone's change is later"
+    },
+    {
+      "receiver": "phone",
+      "local": 100,
+      "remote": 150,
+      "adopt": true,
+      "why": "the Mac's change is later"
+    },
+    {
+      "receiver": "phone",
+      "local": 0,
+      "remote": 50,
+      "adopt": true,
+      "why": "a fresh phone takes anything"
+    },
+    {
+      "receiver": "mac",
+      "local": 100,
+      "remote": 100,
+      "adopt": false,
+      "why": "a tie goes to the Mac"
+    },
+    {
+      "receiver": "mac",
+      "local": 100,
+      "remote": 100.5,
+      "adopt": false,
+      "why": "within 1 s the Mac wins"
+    },
+    {
+      "receiver": "mac",
+      "local": 100,
+      "remote": 101.5,
+      "adopt": true,
+      "why": "the phone's change is later"
+    },
+    {
+      "receiver": "mac",
+      "local": 100,
+      "remote": 50,
+      "adopt": false,
+      "why": "the Mac's change is later"
+    },
+    {
+      "receiver": "mac",
+      "local": 0,
+      "remote": 50,
+      "adopt": true,
+      "why": "a freshly launched Mac takes the phone's timer"
+    }
+  ]
+}

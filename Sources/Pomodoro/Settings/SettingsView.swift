@@ -6,13 +6,15 @@ struct SettingsView: View {
     @Bindable var store: SettingsStore
     let loginItem: LoginItem
     let config: AppConfig
+    let sync: SyncServer?
 
     @State private var tab: SettingsTab
 
-    init(store: SettingsStore, loginItem: LoginItem, config: AppConfig, tab: SettingsTab = .general) {
+    init(store: SettingsStore, loginItem: LoginItem, config: AppConfig, sync: SyncServer? = nil, tab: SettingsTab = .general) {
         _store = Bindable(wrappedValue: store)
         self.loginItem = loginItem
         self.config = config
+        self.sync = sync
         _tab = State(initialValue: tab)
     }
 
@@ -96,12 +98,14 @@ struct SettingsView: View {
         case .general: GeneralTab(store: store, loginItem: loginItem, metrics: metrics)
         case .intervals: IntervalsTab(store: store, config: config)
         case .sounds: SoundsTab(store: store, metrics: metrics)
+        case .devices:
+            if let sync { DevicesTab(sync: sync, metrics: metrics) }
         }
     }
 }
 
 enum SettingsTab: CaseIterable, Identifiable {
-    case general, intervals, sounds
+    case general, intervals, sounds, devices
 
     var id: Self { self }
 
@@ -115,6 +119,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .general: return "General"
         case .intervals: return "Intervals"
         case .sounds: return "Notifications & Sounds"
+        case .devices: return "Devices"
         }
     }
 }

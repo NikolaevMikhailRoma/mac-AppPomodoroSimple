@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nikolaev.pomodoro.TimerRepository
 import com.nikolaev.pomodoro.core.Settings
+import com.nikolaev.pomodoro.sync.SyncClient
 import com.nikolaev.pomodoro.system.SoundPlayer
 import com.nikolaev.pomodoro.ui.Design.Settings as S
 import kotlin.math.ceil
@@ -66,15 +67,23 @@ private val fieldShape = RoundedCornerShape(4.dp)
 private enum class Tab(val title: String) {
     GENERAL("General"),
     INTERVALS("Intervals"),
-    SOUNDS("Notifications & Sounds"),
+    SOUNDS("Sounds"),
+    MAC("Mac"),
 }
 
-/** The Mac settings window as a phone screen: the same three tabs in the same box. */
+/** The Mac settings window as a phone screen: the same tabs in the same box, and a tab for the Mac itself. */
 @Composable
-fun SettingsScreen(timer: TimerRepository, onBack: () -> Unit, onFixNotifications: () -> Unit) {
+fun SettingsScreen(
+    timer: TimerRepository,
+    sync: SyncClient,
+    onBack: () -> Unit,
+    onFixNotifications: () -> Unit,
+    onPair: () -> Unit,
+    initialTab: String? = null,
+) {
     val settings by timer.settings.collectAsStateWithLifecycle()
     val notificationsAllowed by timer.notificationsAllowed.collectAsStateWithLifecycle()
-    var tab by rememberSaveable { mutableStateOf(Tab.GENERAL) }
+    var tab by rememberSaveable { mutableStateOf(Tab.entries.firstOrNull { it.name == initialTab } ?: Tab.GENERAL) }
     val boxShape = RoundedCornerShape(S.CORNER_RADIUS.dp)
 
     MaterialTheme(colorScheme = darkColorScheme(primary = S.accent, surface = S.box, surfaceContainer = S.box, onSurface = S.label)) {
@@ -112,6 +121,7 @@ fun SettingsScreen(timer: TimerRepository, onBack: () -> Unit, onFixNotification
                         Tab.GENERAL -> GeneralTab(settings, update, blocked)
                         Tab.INTERVALS -> IntervalsTab(settings, timer, update)
                         Tab.SOUNDS -> SoundsTab(settings, timer.sound, update, blocked)
+                        Tab.MAC -> MacTab(sync, onPair)
                     }
                 }
                 TabBar(tab, Modifier.align(Alignment.TopCenter)) { tab = it }
@@ -220,6 +230,28 @@ private fun SoundsTab(s: Settings, player: SoundPlayer, update: (Settings) -> Un
         update(s.copy(sound = sound.copy(notificationsEnabled = it)))
     }
     blocked(sound.notificationsEnabled)
+}
+
+@Composable
+private fun MacTab(sync: SyncClient, onPair: () -> Unit) {
+    val status by sync.status.collectAsStateWithLifecycle()
+    val text = when (val s = status) {
+        SyncClient.Status.NotPaired -> "Pair with Pomodoro on your Mac to see and control one timer from both, over your Wi-Fi."
+        SyncClient.Status.Pairing -> "Pairing…"
+        SyncClient.Status.Searching -> "Looking for the Mac on this Wi-Fi…"
+        SyncClient.Status.Connected -> "Connected to the Mac."
+        is SyncClient.Status.Failed -> s.message
+    }
+    Text(text, style = labelStyle, modifier = Modifier.padding(vertical = 12.dp))
+    val paired = status != SyncClient.Status.NotPaired
+    Text(
+        if (paired) "Forget the Mac" else "Pair with Mac",
+        style = labelStyle.copy(color = S.accent),
+        modifier = Modifier.clickable { if (paired) sync.forget() else onPair() }.padding(vertical = 12.dp),
+    )
+    if (paired) {
+        Text("Pair again", style = labelStyle.copy(color = S.accent), modifier = Modifier.clickable(onClick = onPair).padding(vertical = 12.dp))
+    }
 }
 
 @Composable
