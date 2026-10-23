@@ -150,6 +150,26 @@ struct SyncWireTests {
         }
     }
 
+    @Test("interval settings: the message, and defaults never win")
+    func intervals() throws {
+        let v = section("intervals")
+        let m = try #require(SyncMessage(data: Data((v["json"] as! String).utf8)))
+        guard case .intervals(let i, let changedAt, let sentAt) = m else { Issue.record("not intervals"); return }
+        #expect(i == IntervalSettings(workMinutes: 60, shortBreakMinutes: 5, longBreakMinutes: 15, longBreakAfter: 4))
+        #expect(changedAt == Date(timeIntervalSince1970: 900.25))
+        #expect(sentAt == Date(timeIntervalSince1970: 1000.5))
+        #expect(SyncMessage(data: m.data) == m)
+
+        for case let c as [String: Any] in vectors["mergeIntervals"] as! [Any] {
+            let adopt = SyncRules.shouldAdoptIntervals(
+                local: Date(timeIntervalSince1970: c["local"] as! Double),
+                remote: Date(timeIntervalSince1970: c["remote"] as! Double),
+                receiverIsMac: c["receiver"] as! String == "mac"
+            )
+            #expect(adopt == c["adopt"] as! Bool, "\(c["why"]!)")
+        }
+    }
+
     @Test("hello, pair and a version from the future")
     func handshake() {
         let nonce = Data(count: 16)

@@ -6,11 +6,14 @@ data class Settings(
     val general: GeneralSettings = GeneralSettings(),
     val intervals: IntervalSettings = IntervalSettings(),
     val sound: SoundSettings = SoundSettings(),
+    /** When the user last changed [intervals]; 0 for defaults nobody touched. Shared by it with the Mac (docs/SYNC.md). */
+    val intervalsChangedAt: Double = 0.0,
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("general", general.toJson())
         .put("intervals", intervals.toJson())
         .put("sound", sound.toJson())
+        .put("intervalsChangedAt", intervalsChangedAt)
 
     companion object {
         /** Settings stored by an older version keep working when fields are added. */
@@ -20,6 +23,7 @@ data class Settings(
                 general = GeneralSettings.from(o.obj("general")),
                 intervals = IntervalSettings.from(o.obj("intervals")),
                 sound = SoundSettings.from(o.obj("sound")),
+                intervalsChangedAt = o.num("intervalsChangedAt", 0.0),
             )
         }
     }

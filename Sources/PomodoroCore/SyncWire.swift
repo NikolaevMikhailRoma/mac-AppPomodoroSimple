@@ -8,6 +8,7 @@ public enum SyncMessage: Equatable, Sendable {
     case pair(id: String, name: String, publicKey: Data, nonce: Data, proof: Data)
     case error(String)
     case state(EngineState, sentAt: Date)
+    case intervals(IntervalSettings, changedAt: Date, sentAt: Date)
     case unpair
     case ping
     /// A hello or pair from another protocol version.
@@ -38,6 +39,11 @@ public enum SyncMessage: Equatable, Sendable {
             guard let sentAt = o["sentAt"] as? Double,
                   let state = (o["state"] as? [String: Any]).flatMap(EngineState.init(json:)) else { return nil }
             self = .state(state, sentAt: Date(timeIntervalSince1970: sentAt))
+        case "intervals":
+            guard let sentAt = o["sentAt"] as? Double, let changedAt = o["changedAt"] as? Double,
+                  let intervals = (o["intervals"] as? [String: Any]).flatMap(IntervalSettings.init(json:)) else { return nil }
+            self = .intervals(intervals, changedAt: Date(timeIntervalSince1970: changedAt),
+                              sentAt: Date(timeIntervalSince1970: sentAt))
         case "unpair":
             self = .unpair
         case "ping":
@@ -59,6 +65,9 @@ public enum SyncMessage: Equatable, Sendable {
             o = ["type": "error", "reason": reason]
         case .state(let state, let sentAt):
             o = ["type": "state", "sentAt": sentAt.timeIntervalSince1970, "state": state.json]
+        case .intervals(let intervals, let changedAt, let sentAt):
+            o = ["type": "intervals", "sentAt": sentAt.timeIntervalSince1970,
+                 "changedAt": changedAt.timeIntervalSince1970, "intervals": intervals.json]
         case .unpair:
             o = ["type": "unpair"]
         case .ping, .unsupportedVersion, .unknown:
@@ -119,6 +128,20 @@ extension EngineState {
     }
 }
 
+extension IntervalSettings {
+    public init?(json o: [String: Any]) {
+        guard let work = o["workMinutes"] as? Double, let short = o["shortBreakMinutes"] as? Double,
+              let long = o["longBreakMinutes"] as? Double, let after = o["longBreakAfter"] as? Int,
+              work > 0, short > 0, long > 0, after > 0 else { return nil }
+        self.init(workMinutes: work, shortBreakMinutes: short, longBreakMinutes: long, longBreakAfter: after)
+    }
+
+    public var json: [String: Any] {
+        ["workMinutes": workMinutes, "shortBreakMinutes": shortBreakMinutes,
+         "longBreakMinutes": longBreakMinutes, "longBreakAfter": longBreakAfter]
+    }
+}
+
 public enum SyncRules {
     /// Changes closer than this count as simultaneous, and the Mac wins.
     public static let tieWindow: TimeInterval = 1
@@ -136,6 +159,16 @@ public enum SyncRules {
         return receiverIsMac
             ? local == never || remote.timeIntervalSince(local) > tieWindow
             : remote != never && remote.timeIntervalSince(local) >= -tieWindow
+    }
+
+    /// The same for interval settings, except that defaults (time 0) never
+    /// win, not even over other defaults.
+    public static func shouldAdoptIntervals(local: Date, remote: Date, receiverIsMac: Bool) -> Bool {
+        let never = Date(timeIntervalSince1970: 0)
+        guard remote != never else { return false }
+        return local == never || (receiverIsMac
+            ? remote.timeIntervalSince(local) > tieWindow
+            : remote.timeIntervalSince(local) >= -tieWindow)
     }
 }
 

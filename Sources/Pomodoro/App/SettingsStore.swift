@@ -14,9 +14,21 @@ final class SettingsStore {
     var settings: Settings {
         didSet {
             guard settings != oldValue else { return }
+            // A change by the user stamps the intervals; intervals taken from a
+            // phone arrive with their own time (adoptIntervals).
+            if settings.intervals != oldValue.intervals, settings.intervalsChangedAt == oldValue.intervalsChangedAt {
+                settings.intervalsChangedAt = Date()
+            }
             save()
             onChange?(settings)
         }
+    }
+
+    func adoptIntervals(_ intervals: IntervalSettings, changedAt: Date) {
+        var new = settings
+        new.intervals = intervals
+        new.intervalsChangedAt = changedAt
+        settings = new
     }
 
     init(defaults: UserDefaults = .standard, fallback: Settings = Settings()) {

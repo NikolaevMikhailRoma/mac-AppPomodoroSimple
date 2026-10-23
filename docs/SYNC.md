@@ -103,6 +103,9 @@ Encrypted frames carry JSON.
   "phaseDuration": 1500, "remaining": 1500, "endsAt": 1792763000.25,
   "completedToday": 3, "sinceLongBreak": 3, "day": "2026-10-23",
   "changedAt": 1792761500.25}}
+{"type": "intervals", "sentAt": 1792761500.25, "changedAt": 1792700000.5,
+ "intervals": {"workMinutes": 60, "shortBreakMinutes": 5,
+               "longBreakMinutes": 15, "longBreakAfter": 4}}
 {"type": "unpair"}
 {"type": "ping"}
 ```
@@ -110,6 +113,8 @@ Encrypted frames carry JSON.
 - `state`: sent by both sides right after the handshake, and then after
   every change. `endsAt` is `null` unless running. `day` is the local date
   the count belongs to.
+- `intervals`: the interval settings, sent right after the handshake and
+  after every change. See Interval settings below.
 - `unpair`: the sender has forgotten the receiver. The receiver forgets it
   too, then the connection closes.
 - `ping`: sent after 20 seconds without other frames. 60 seconds of silence
@@ -147,8 +152,23 @@ at most every 0.25 seconds and always the newest: dragging the ring changes
 the state with every mouse move. The Mac sends to every connected phone, the
 phone to the Mac.
 
-Settings are not synced. Each device uses its own durations for the next
-interval until the states meet.
+## Interval settings
+
+Only the durations and "long break after" are shared: they shape the common
+timer. Sound, notifications, auto-start and appearance stay each device's
+own: turning notifications off on the phone must not touch the Mac.
+
+`changedAt` is when the user last changed any of them, one time for the
+group; 0 means nobody has, the defaults. Defaults never win, not even over
+other defaults. Otherwise the later change wins, and the Mac within 1 second:
+
+- The phone takes the remote intervals if `remote ≠ 0` and
+  (`local = 0` or `remote ≥ local − 1`).
+- The Mac takes them if `remote ≠ 0` and (`local = 0` or `remote > local + 1`).
+
+Taking them is not a change of its own: the device keeps the sender's
+`changedAt` (on its own clock). The Mac passes taken intervals on to its
+other phones; the phone sends only its own changes.
 
 ## Discovery
 

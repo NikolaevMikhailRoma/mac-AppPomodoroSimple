@@ -22,6 +22,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         sync.currentState = { [weak self] in self?.timer.engine.state }
         sync.onState = { [weak self] state in self?.timer.receive(state) }
         timer.onStateChange = { [weak self] state in self?.sync.broadcast(state) }
+        sync.currentIntervals = { [weak self] in
+            self.map { ($0.settingsStore.settings.intervals, $0.settingsStore.settings.intervalsChangedAt) }
+        }
+        let dial = config.dial.dial
+        sync.onIntervals = { [weak self] intervals, changedAt in
+            guard let store = self?.settingsStore,
+                  SyncRules.shouldAdoptIntervals(local: store.settings.intervalsChangedAt, remote: changedAt, receiverIsMac: true)
+            else { return }
+            store.adoptIntervals(dial.clamp(intervals: intervals), changedAt: changedAt)
+        }
         #if DEBUG
         if CommandLine.arguments.contains("--pair") { sync.beginPairing() }
         #endif
@@ -29,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         settingsStore.onChange = { [weak self] settings in
             self?.timer.apply(settings)
+            self?.sync.intervalsChanged(settings.intervals, changedAt: settings.intervalsChangedAt)
             Theme.applyAppearance(settings.general.appearance)
         }
         Theme.applyAppearance(settingsStore.settings.general.appearance)

@@ -172,6 +172,87 @@
       "why": "two untouched states: the Mac takes the phone's, with its count"
     }
   ],
+  "intervals": {
+    "json": "{\"type\":\"intervals\",\"sentAt\":1000.5,\"changedAt\":900.25,\"intervals\":{\"workMinutes\":60,\"shortBreakMinutes\":5,\"longBreakMinutes\":15,\"longBreakAfter\":4}}",
+    "sentAt": 1000.5,
+    "changedAt": 900.25,
+    "workMinutes": 60,
+    "shortBreakMinutes": 5,
+    "longBreakMinutes": 15,
+    "longBreakAfter": 4
+  },
+  "mergeIntervals": [
+    {
+      "receiver": "phone",
+      "local": 0,
+      "remote": 0,
+      "adopt": false,
+      "why": "defaults never win, not even over defaults"
+    },
+    {
+      "receiver": "mac",
+      "local": 0,
+      "remote": 0,
+      "adopt": false,
+      "why": "defaults never win, not even over defaults"
+    },
+    {
+      "receiver": "phone",
+      "local": 0,
+      "remote": 50,
+      "adopt": true,
+      "why": "the user's choice beats defaults"
+    },
+    {
+      "receiver": "mac",
+      "local": 0,
+      "remote": 50,
+      "adopt": true,
+      "why": "the user's choice beats defaults"
+    },
+    {
+      "receiver": "phone",
+      "local": 100,
+      "remote": 0,
+      "adopt": false,
+      "why": "defaults never win"
+    },
+    {
+      "receiver": "mac",
+      "local": 100,
+      "remote": 0,
+      "adopt": false,
+      "why": "defaults never win"
+    },
+    {
+      "receiver": "phone",
+      "local": 100,
+      "remote": 99.5,
+      "adopt": true,
+      "why": "within 1 s the Mac wins"
+    },
+    {
+      "receiver": "mac",
+      "local": 100,
+      "remote": 100.5,
+      "adopt": false,
+      "why": "within 1 s the Mac wins"
+    },
+    {
+      "receiver": "phone",
+      "local": 100,
+      "remote": 98,
+      "adopt": false,
+      "why": "the phone's change is later"
+    },
+    {
+      "receiver": "mac",
+      "local": 100,
+      "remote": 101.5,
+      "adopt": true,
+      "why": "the phone's change is later"
+    }
+  ],
   "shiftUntouched": {
     "sentAt": 1000.0,
     "receivedAt": 1003.5,

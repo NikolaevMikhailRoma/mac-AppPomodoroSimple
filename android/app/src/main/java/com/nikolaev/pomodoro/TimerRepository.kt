@@ -5,6 +5,7 @@ import androidx.core.content.edit
 import com.nikolaev.pomodoro.core.DurationDial
 import com.nikolaev.pomodoro.core.EngineEvent
 import com.nikolaev.pomodoro.core.EngineState
+import com.nikolaev.pomodoro.core.IntervalSettings
 import com.nikolaev.pomodoro.core.PomodoroEngine
 import com.nikolaev.pomodoro.core.RunState
 import com.nikolaev.pomodoro.core.Settings
@@ -56,6 +57,10 @@ class TimerRepository(context: Context) {
     /** A new state for the Mac: after a button or an interval running out, not after taking the Mac's. */
     var onStateChange: ((EngineState) -> Unit)? = null
     private var sentChangedAt: Double? = null
+
+    /** The user changed the intervals: they go to the Mac (docs/SYNC.md, Interval settings). */
+    var onIntervalsChange: ((IntervalSettings, Double) -> Unit)? = null
+    private var sentIntervalsAt: Double? = null
 
     init {
         engine.rollOverDay(today())
@@ -112,7 +117,21 @@ class TimerRepository(context: Context) {
 
     fun updateSettings(new: Settings) {
         val old = _settings.value
-        val clamped = new.copy(intervals = dial.clampIntervals(new.intervals))
+        var clamped = new.copy(intervals = dial.clampIntervals(new.intervals))
+        if (clamped.intervals != old.intervals) clamped = clamped.copy(intervalsChangedAt = now())
+        applySettings(clamped)
+    }
+
+    /** The Mac's interval settings, their change time already on this phone's clock. */
+    fun receiveIntervals(intervals: IntervalSettings, changedAt: Double) {
+        val old = _settings.value
+        if (!SyncRules.shouldAdoptIntervals(old.intervalsChangedAt, changedAt, receiverIsMac = false)) return
+        sentIntervalsAt = changedAt
+        applySettings(old.copy(intervals = dial.clampIntervals(intervals), intervalsChangedAt = changedAt))
+    }
+
+    private fun applySettings(clamped: Settings) {
+        val old = _settings.value
         if (clamped == old) return
         _settings.value = clamped
         prefs.edit { putString(KEY_SETTINGS, clamped.toJson().toString()) }
@@ -120,6 +139,10 @@ class TimerRepository(context: Context) {
         engine.applySettings(clamped.intervals, now())
         // Only "show timer in notifications" changes the notification without changing the state.
         publish(force = clamped.general != old.general)
+        if (clamped.intervalsChangedAt != sentIntervalsAt) {
+            sentIntervalsAt = clamped.intervalsChangedAt
+            onIntervalsChange?.invoke(clamped.intervals, clamped.intervalsChangedAt)
+        }
     }
 
     /** After the permission dialog or a return from Android's settings. */

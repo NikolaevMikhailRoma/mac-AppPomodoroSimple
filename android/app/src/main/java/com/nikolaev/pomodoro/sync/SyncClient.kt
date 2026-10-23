@@ -13,6 +13,7 @@ import com.nikolaev.pomodoro.core.PairLink
 import com.nikolaev.pomodoro.core.SessionCipher
 import com.nikolaev.pomodoro.core.SyncCrypto
 import com.nikolaev.pomodoro.core.SyncMessage
+import com.nikolaev.pomodoro.core.SyncRules
 import com.nikolaev.pomodoro.core.shifted
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -72,6 +73,9 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
                 }, wait, TimeUnit.MILLISECONDS)
             }
         }
+        timer.onIntervalsChange = { intervals, changedAt ->
+            connection?.let { c -> writer.execute { c.trySend(SyncMessage.Intervals(intervals, changedAt, now())) } }
+        }
         writer.scheduleWithFixedDelay({
             connection?.takeIf { now() - it.lastSent > PING_AFTER }?.trySend(SyncMessage.Ping)
         }, 5, 5, TimeUnit.SECONDS)
@@ -128,6 +132,8 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
                 delay = 1_000L
                 setStatus(Status.Connected)
                 c.trySend(SyncMessage.State(timer.state.value, now()))
+                val settings = timer.settings.value
+                c.trySend(SyncMessage.Intervals(settings.intervals, settings.intervalsChangedAt, now()))
                 while (true) {
                     val message = c.read()
                     val receivedAt = now()
@@ -263,6 +269,8 @@ class SyncClient(context: Context, private val timer: TimerRepository) {
     private fun handle(message: SyncMessage, receivedAt: Double) {
         when (message) {
             is SyncMessage.State -> timer.receive(message.state.shifted(receivedAt - message.sentAt))
+            is SyncMessage.Intervals ->
+                timer.receiveIntervals(message.intervals, SyncRules.shifted(message.changedAt, receivedAt - message.sentAt))
             SyncMessage.Unpair -> {
                 store.forget()
                 stop()

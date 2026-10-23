@@ -18,6 +18,7 @@ sealed interface SyncMessage {
         SyncMessage
     data class Error(val reason: String) : SyncMessage
     data class State(val state: EngineState, val sentAt: Double) : SyncMessage
+    data class Intervals(val intervals: IntervalSettings, val changedAt: Double, val sentAt: Double) : SyncMessage
     data object Unpair : SyncMessage
     data object Ping : SyncMessage
     /** A hello from another protocol version. */
@@ -31,6 +32,8 @@ sealed interface SyncMessage {
             .put("pub", publicKey.base64Url()).put("nonce", nonce.base64Url()).put("proof", proof.base64Url())
         is Error -> JSONObject().put("type", "error").put("reason", reason)
         is State -> JSONObject().put("type", "state").put("sentAt", sentAt).put("state", state.toWire())
+        is Intervals -> JSONObject().put("type", "intervals").put("sentAt", sentAt).put("changedAt", changedAt)
+            .put("intervals", intervals.toJson())
         Unpair -> JSONObject().put("type", "unpair")
         Ping, UnsupportedVersion, Unknown -> JSONObject().put("type", "ping")
     }
@@ -53,6 +56,18 @@ sealed interface SyncMessage {
                 "state" -> {
                     val sentAt = o.num("sentAt", Double.NaN).takeIf { !it.isNaN() } ?: return null
                     State(EngineState.fromWire(o.obj("state")) ?: return null, sentAt)
+                }
+                "intervals" -> {
+                    val sentAt = o.num("sentAt", Double.NaN).takeIf { !it.isNaN() } ?: return null
+                    val changedAt = o.num("changedAt", Double.NaN).takeIf { !it.isNaN() } ?: return null
+                    val i = o.obj("intervals") ?: return null
+                    val intervals = IntervalSettings.from(i, IntervalSettings(-1.0, -1.0, -1.0, -1))
+                    if (intervals.workMinutes <= 0 || intervals.shortBreakMinutes <= 0 ||
+                        intervals.longBreakMinutes <= 0 || intervals.longBreakAfter <= 0
+                    ) {
+                        return null
+                    }
+                    Intervals(intervals, changedAt, sentAt)
                 }
                 "unpair" -> Unpair
                 "ping" -> Ping
@@ -96,6 +111,10 @@ object SyncRules {
      */
     fun shouldAdopt(local: Double, remote: Double, receiverIsMac: Boolean): Boolean =
         if (receiverIsMac) local == 0.0 || remote - local > TIE_WINDOW else remote != 0.0 && remote - local >= -TIE_WINDOW
+
+    /** The same for interval settings, except that defaults (time 0) never win, not even over other defaults. */
+    fun shouldAdoptIntervals(local: Double, remote: Double, receiverIsMac: Boolean): Boolean =
+        remote != 0.0 && (local == 0.0 || if (receiverIsMac) remote - local > TIE_WINDOW else remote - local >= -TIE_WINDOW)
 }
 
 /** What the pairing QR on the Mac says. */

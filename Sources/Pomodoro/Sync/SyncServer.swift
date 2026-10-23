@@ -32,6 +32,10 @@ final class SyncServer {
     @ObservationIgnored var currentState: () -> EngineState? = { nil }
     /// A phone's state, already on this Mac's clock.
     @ObservationIgnored var onState: (EngineState) -> Void = { _ in }
+    /// The interval settings and when the user last changed them, sent to a phone as soon as it connects.
+    @ObservationIgnored var currentIntervals: () -> (IntervalSettings, Date)? = { nil }
+    /// A phone's interval settings and their change time, already on this Mac's clock.
+    @ObservationIgnored var onIntervals: (IntervalSettings, Date) -> Void = { _, _ in }
 
     @ObservationIgnored private var listener: NWListener?
     @ObservationIgnored private var port: UInt16?
@@ -40,6 +44,7 @@ final class SyncServer {
     @ObservationIgnored private var pairingTimer: Timer?
     @ObservationIgnored private var pendingState: EngineState?
     @ObservationIgnored private var lastBroadcast = Date.distantPast
+    @ObservationIgnored private var sentIntervalsAt: Date?
 
     init(devices: PairedDevices) {
         self.devices = devices
@@ -75,6 +80,16 @@ final class SyncServer {
         let wait = max(0, lastBroadcast.addingTimeInterval(Self.sendInterval).timeIntervalSinceNow)
         DispatchQueue.main.asyncAfter(deadline: .now() + wait) { [weak self] in
             MainActor.assumeIsolated { self?.sendPendingState() }
+        }
+    }
+
+    /// After every settings change; sends only when the intervals' change time moved,
+    /// which includes intervals taken from one phone and passed on to the others.
+    func intervalsChanged(_ intervals: IntervalSettings, changedAt: Date) {
+        guard changedAt != sentIntervalsAt else { return }
+        sentIntervalsAt = changedAt
+        for peer in peers where peer.isOpen {
+            peer.send(.intervals(intervals, changedAt: changedAt, sentAt: Date()))
         }
     }
 
@@ -203,12 +218,17 @@ final class SyncServer {
     fileprivate func opened(_ peer: Peer) {
         connected = Set(peers.filter(\.isOpen).compactMap(\.deviceId))
         if let state = currentState() { peer.send(.state(state, sentAt: Date())) }
+        if let (intervals, changedAt) = currentIntervals() {
+            peer.send(.intervals(intervals, changedAt: changedAt, sentAt: Date()))
+        }
     }
 
     fileprivate func received(_ message: SyncMessage, from peer: Peer) {
         switch message {
         case .state(let state, let sentAt):
             onState(state.shifted(by: Date().timeIntervalSince(sentAt)))
+        case .intervals(let intervals, let changedAt, let sentAt):
+            onIntervals(intervals, SyncRules.shifted(changedAt, by: Date().timeIntervalSince(sentAt)))
         case .unpair:
             if let id = peer.deviceId { devices.remove(id: id) }
             peer.close()

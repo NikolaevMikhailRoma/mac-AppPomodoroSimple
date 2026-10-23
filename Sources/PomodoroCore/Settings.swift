@@ -4,15 +4,20 @@ public struct Settings: Codable, Equatable, Sendable {
     public var general: GeneralSettings
     public var intervals: IntervalSettings
     public var sound: SoundSettings
+    /// When the user last changed `intervals`; the epoch for defaults nobody
+    /// touched. Paired devices share the intervals by it (docs/SYNC.md).
+    public var intervalsChangedAt: Date
 
     public init(
         general: GeneralSettings = GeneralSettings(),
         intervals: IntervalSettings = IntervalSettings(),
-        sound: SoundSettings = SoundSettings()
+        sound: SoundSettings = SoundSettings(),
+        intervalsChangedAt: Date = Date(timeIntervalSince1970: 0)
     ) {
         self.general = general
         self.intervals = intervals
         self.sound = sound
+        self.intervalsChangedAt = intervalsChangedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -21,6 +26,7 @@ public struct Settings: Codable, Equatable, Sendable {
         general = c.value(.general, or: d.general)
         intervals = c.value(.intervals, or: d.intervals)
         sound = c.value(.sound, or: d.sound)
+        intervalsChangedAt = c.value(.intervalsChangedAt, or: d.intervalsChangedAt)
     }
 }
 

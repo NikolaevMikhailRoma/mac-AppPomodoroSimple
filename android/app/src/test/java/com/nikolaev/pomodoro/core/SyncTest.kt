@@ -141,6 +141,25 @@ class SyncWireTest {
     }
 
     @Test
+    fun intervalSettingsTravelAndDefaultsNeverWin() {
+        val v = vectors.getJSONObject("intervals")
+        val m = SyncMessage.decode(v.getString("json").toByteArray()) as SyncMessage.Intervals
+        assertEquals(IntervalSettings(60.0, 5.0, 15.0, 4), m.intervals)
+        assertEquals(900.25, m.changedAt, 0.0)
+        assertEquals(1000.5, m.sentAt, 0.0)
+        assertEquals(m, SyncMessage.decode(m.encode()))
+        val zero = """{"type":"intervals","sentAt":1,"changedAt":1,"intervals":{"workMinutes":0}}"""
+        assertNull(SyncMessage.decode(zero.toByteArray()))
+
+        val cases = vectors.getJSONArray("mergeIntervals")
+        for (i in 0 until cases.length()) {
+            val c = cases.getJSONObject(i)
+            val adopt = SyncRules.shouldAdoptIntervals(c.getDouble("local"), c.getDouble("remote"), c.getString("receiver") == "mac")
+            assertEquals(c.getString("why"), c.getBoolean("adopt"), adopt)
+        }
+    }
+
+    @Test
     fun handshakeMessagesRoundTrip() {
         val nonce = ByteArray(16) { it.toByte() }
         val hello = SyncMessage.decode(SyncMessage.Hello("a", nonce).encode()) as SyncMessage.Hello
