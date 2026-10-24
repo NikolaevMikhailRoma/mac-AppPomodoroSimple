@@ -148,13 +148,14 @@ extension IntervalSettings {
 public enum DeviceKind {
     public static let mac = "mac"
     public static let android = "android"
+    public static let ios = "ios"
 
     /// For the lists of paired devices: "Mac", "Android", "iPhone", "Windows".
     public static func title(_ kind: String) -> String {
         switch kind {
         case mac: return "Mac"
         case android: return "Android"
-        case "ios": return "iPhone"
+        case ios: return "iPhone"
         case "windows": return "Windows"
         default: return kind.prefix(1).uppercased() + kind.dropFirst()
         }

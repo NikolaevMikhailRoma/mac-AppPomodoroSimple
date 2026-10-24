@@ -1,0 +1,71 @@
+# The iPhone app. `xcodegen` turns this into Pomodoro.xcodeproj; run.sh does it on every build.
+name: Pomodoro
+options:
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  Pomodoro:
+    path: ..
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  # Not "Pomodoro": the package has a Mac product of that name, and the test runner mixes them up.
+  PomodoroPhone:
+    type: application
+    platform: iOS
+    sources: [Pomodoro, Shared]
+    dependencies:
+      - package: Pomodoro
+        product: PomodoroCore
+      - package: Pomodoro
+        product: PomodoroConfig
+      - target: LiveActivity
+    info:
+      path: Pomodoro/Info.plist
+      properties:
+        CFBundleDisplayName: Pomodoro
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIUserInterfaceStyle: Dark
+        NSSupportsLiveActivities: true
+        # Asked at pairing, never at launch.
+        NSCameraUsageDescription: Pomodoro uses the camera only to read the pairing code on your Mac.
+        NSLocalNetworkUsageDescription: Pomodoro finds Pomodoro on your Mac over your Wi-Fi and keeps one timer on both.
+        NSBonjourServices: [_pomodoro._tcp]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nikolaev.pomodoro
+        PRODUCT_NAME: Pomodoro
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    scheme:
+      testTargets: [UITests]
+  # The Lock Screen timer. Its button runs in the app (ToggleTimerIntent).
+  LiveActivity:
+    type: app-extension
+    platform: iOS
+    sources: [LiveActivity, Shared]
+    info:
+      path: LiveActivity/Info.plist
+      properties:
+        CFBundleDisplayName: Pomodoro
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nikolaev.pomodoro.LiveActivity
+  # Clicks through every screen on the simulator: test.sh.
+  UITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: PomodoroPhone
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nikolaev.pomodoro.UITests
+        GENERATE_INFOPLIST_FILE: YES

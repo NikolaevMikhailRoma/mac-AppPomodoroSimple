@@ -27,7 +27,7 @@ struct DevicesTab: View {
     private var deviceList: some View {
         VStack(spacing: 0) {
             if sync.devices.list.isEmpty {
-                hint("Pair your phone to see and control this timer from Pomodoro on Android, over your Wi-Fi.")
+                hint("Pair your phone to see and control this timer from Pomodoro on Android or iPhone, over your Wi-Fi.")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.bottom, metrics.sectionBottomPadding)
             }

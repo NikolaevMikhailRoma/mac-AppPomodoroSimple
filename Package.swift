@@ -3,7 +3,13 @@ import PackageDescription
 
 let package = Package(
     name: "Pomodoro",
-    platforms: [.macOS(.v15)],
+    platforms: [.macOS(.v15), .iOS(.v17)],
+    products: [
+        .executable(name: "Pomodoro", targets: ["Pomodoro"]),
+        // The iPhone app (ios/) builds on the same logic.
+        .library(name: "PomodoroCore", targets: ["PomodoroCore"]),
+        .library(name: "PomodoroConfig", targets: ["PomodoroConfig"]),
+    ],
     targets: [
         // Логика. Ни AppKit, ни SwiftUI, ни одного цвета — это импортируют тесты.
         .target(name: "PomodoroCore"),
