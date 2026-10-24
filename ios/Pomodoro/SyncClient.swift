@@ -22,6 +22,9 @@ final class SyncClient {
     private static let helloLimit: TimeInterval = 5
     private static let discoveryLimit: TimeInterval = 5
     private static let quickLimit: TimeInterval = 2.5
+    /// A first pairing waits for iOS to ask about the Local Network: until
+    /// the user answers, every connection waits too.
+    private static let pairingLimit: TimeInterval = 30
 
     private(set) var status: Status
 
@@ -116,6 +119,7 @@ final class SyncClient {
 
     private func run(_ pairing: PairLink?) async {
         var pairing = pairing
+        let pairingUntil = Date().addingTimeInterval(Self.pairingLimit)
         var delay: TimeInterval = 1
         while !Task.isCancelled {
             setStatus(pairing == nil ? .searching : .pairing)
@@ -137,7 +141,7 @@ final class SyncClient {
                 setStatus(.failed(refused.message))
                 break
             } catch {
-                if pairing != nil {
+                if pairing != nil, Date() > pairingUntil {
                     setStatus(.failed("Could not reach the Mac. Check that both are on the same Wi-Fi, and that Pomodoro "
                         + "may use it: iOS Settings → Privacy & Security → Local Network."))
                     break
@@ -145,9 +149,10 @@ final class SyncClient {
             }
             guard !Task.isCancelled else { return }
             link?.close()
-            setStatus(.searching)
+            setStatus(pairing == nil ? .searching : .pairing)
             try? await Task.sleep(for: .seconds(delay))
-            delay = min(delay * 2, 30)
+            // A pairing retries every second: the user may allow the Local Network any moment.
+            if pairing == nil { delay = min(delay * 2, 30) }
         }
         // Gave up: setActive starts a new worker on the next return to the app.
         if !Task.isCancelled {

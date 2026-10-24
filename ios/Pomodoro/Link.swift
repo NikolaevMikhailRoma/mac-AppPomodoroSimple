@@ -111,7 +111,7 @@ final class Link {
             if !frames.isEmpty {
                 let frame = frames.removeFirst()
                 do {
-                    let payload = cipher != nil ? try cipher!.open(frame) : frame
+                    let payload = try cipher?.open(frame) ?? frame
                     guard let message = SyncMessage(data: payload) else { throw SyncCrypto.Failure.badFrame }
                     return message
                 } catch {
@@ -126,10 +126,11 @@ final class Link {
 
     func send(_ message: SyncMessage) {
         guard !isClosed else { return }
-        var payload = message.data
-        if cipher != nil {
-            guard let sealed = try? cipher!.seal(payload) else { return close() }
-            payload = sealed
+        let payload: Data
+        do {
+            payload = try cipher?.seal(message.data) ?? message.data
+        } catch {
+            return close()
         }
         lastSent = Date()
         connection.send(content: FrameReader.frame(payload), completion: .contentProcessed { [weak self] error in
@@ -142,9 +143,14 @@ final class Link {
         guard !isClosed else { return }
         isClosed = true
         watchdog?.invalidate()
-        // Lets a last frame (an unpair) go out first.
-        connection.send(content: nil, contentContext: .finalMessage, isComplete: true,
-                        completion: .contentProcessed { [connection] _ in connection.cancel() })
+        if isReady {
+            // Lets a last frame (an unpair) go out first.
+            connection.send(content: nil, contentContext: .finalMessage, isComplete: true,
+                            completion: .contentProcessed { [connection] _ in connection.cancel() })
+        } else {
+            // Never connected: a last frame would wait for that, and the connection with it, for good.
+            connection.cancel()
+        }
         wake()
     }
 
