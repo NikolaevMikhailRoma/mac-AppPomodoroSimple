@@ -11,6 +11,7 @@
 # (experimental)
 - added android app
 - linked mac and android app, by local network and keychain
+- added iPhone app (iOS 17+), tested on iPhone 12 mini
 
 # macOS
 ![Menu bar and timer](assets/popover.png)
@@ -73,6 +74,11 @@ The same timer on Android 8 and newer. Tested on a Motorola Edge 50 with Android
 ## Build from source (developers)
 
 To build it yourself: JDK 21 and the Android SDK, then `cd android && ./gradlew assembleRelease`.
+
+# iPhone (experimental)
+
+The same timer on iOS 17 and newer, with a Lock Screen timer and sync with the Mac. Tested on an iPhone 12 mini with iOS 26.2.
+Build and install from a Mac with Xcode: `brew install xcodegen`, then `ios/device.sh`.
 
 # Version history
 
