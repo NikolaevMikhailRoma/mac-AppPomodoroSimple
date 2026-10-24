@@ -1,7 +1,18 @@
 # Build output
 .build/
 .swiftpm/
+build/
 *.app/
 *.app.zip
+*.apk
+
+# Android: Gradle caches and the local SDK path
+.gradle/
+.kotlin/
+local.properties
+
+# iPhone: xcodegen makes these from ios/project.yml
+ios/Pomodoro.xcodeproj/
+ios/**/Info.plist
 
 .DS_Store
