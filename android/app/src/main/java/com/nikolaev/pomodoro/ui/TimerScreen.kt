@@ -51,8 +51,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.nikolaev.pomodoro.TimerRepository
 import com.nikolaev.pomodoro.core.RunState
 import com.nikolaev.pomodoro.core.TimeFormat
-import com.nikolaev.pomodoro.ui.Design.Popover as P
-import com.nikolaev.pomodoro.ui.Design.Ring as R
 import kotlinx.coroutines.delay
 
 private const val TICK_MS = 250L
@@ -83,34 +81,36 @@ fun TimerScreen(timer: TimerRepository, onStart: () -> Unit, onOpenSettings: () 
         draft = null
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize().background(P.background)) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Design.popover.color("background"))) {
         // Fit the popover's proportions into the screen whichever way the phone is turned.
-        val scale = minOf(maxWidth.value / P.WIDTH, maxHeight.value / P.HEIGHT).toFloat()
+        val scale = minOf(maxWidth.value / Design.popover["width"], maxHeight.value / Design.popover["height"]).toFloat()
         val units = Units(scale)
         CompositionLocalProvider(LocalUnits provides units) {
-            Column(Modifier.fillMaxSize().safeDrawingPadding().padding(units.dp(P.PADDING))) {
+            Column(Modifier.fillMaxSize().safeDrawingPadding().padding(units.dp(Design.popover["padding"]))) {
                 Row(
-                    Modifier.fillMaxWidth().heightIn(min = units.dp(P.HEADER_HEIGHT)),
+                    Modifier.fillMaxWidth().heightIn(min = units.dp(Design.popover["headerHeight"])),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(state.phase.title, style = fontStyle(Design.Fonts.phase, P.textDim))
+                    Text(state.phase.title, style = fontStyle(Design.fonts.font("phase"), Design.popover.color("textDim")))
                     Spacer(Modifier.weight(1f))
                     IconButton(onClick = { commitIfEditing(); timer.stop() }) {
-                        ResetIcon(units.dp(Design.Icons.RESET), units.dp(Design.Icons.LINE_WIDTH), P.textSecondary)
+                        ResetIcon(units.dp(Design.icons.iconSize("reset")), units.dp(ICON_LINE_WIDTH), Design.popover.color("textSecondary"))
                     }
                 }
 
-                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                // Below the middle by as much as the popover's gaps differ, as on the Mac.
+                val lower = units.dp(Design.popover["headerToRing"] - Design.popover["ringToFooter"])
+                Box(Modifier.weight(1f).fillMaxWidth().padding(top = lower), contentAlignment = Alignment.Center) {
                     Ring(timer.dial.fraction(state.remaining), accent) {
                         commitIfEditing()
                         timer.setDurationFraction(it)
                     }
 
                     Box(
-                        Modifier.offset(y = units.dp(R.DIGITS_OFFSET)).width(units.dp(R.DIAMETER - R.LINE_WIDTH * 4)),
+                        Modifier.offset(y = units.dp(Design.ring["digitsOffset"])).width(units.dp(Design.ring["diameter"] - Design.ring["lineWidth"] * 4)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        val style = fontStyle(Design.Fonts.digits, accent).copy(textAlign = TextAlign.Center)
+                        val style = fontStyle(Design.fonts.font("digits"), accent).copy(textAlign = TextAlign.Center)
                         val current = draft
                         if (current == null) {
                             Text(
@@ -130,11 +130,11 @@ fun TimerScreen(timer: TimerRepository, onStart: () -> Unit, onOpenSettings: () 
                     TransientHint(
                         text = "Max ${TimeFormat.string(timer.dial.maxSeconds)}",
                         trigger = limitHints,
-                        style = fontStyle(Design.Fonts.hint, P.textSecondary),
-                        modifier = Modifier.offset(y = units.dp(R.HINT_OFFSET)),
+                        style = fontStyle(Design.fonts.font("hint"), Design.popover.color("textSecondary")),
+                        modifier = Modifier.offset(y = units.dp(Design.ring["hintOffset"])),
                     )
 
-                    Box(Modifier.offset(y = units.dp(R.PLAY_OFFSET))) {
+                    Box(Modifier.offset(y = units.dp(Design.ring["playOffset"]))) {
                         TransportButton(running, accent) {
                             commitIfEditing()
                             if (!running) onStart()
@@ -144,24 +144,24 @@ fun TimerScreen(timer: TimerRepository, onStart: () -> Unit, onOpenSettings: () 
                 }
 
                 Row(
-                    Modifier.fillMaxWidth().heightIn(min = units.dp(P.FOOTER_HEIGHT)),
+                    Modifier.fillMaxWidth().heightIn(min = units.dp(Design.popover["footerHeight"])),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(Modifier.width(units.dp(P.FOOTER_SIDE_WIDTH)), contentAlignment = Alignment.CenterStart) {
+                    Box(Modifier.width(units.dp(Design.popover["footerSideWidth"])), contentAlignment = Alignment.CenterStart) {
                         IconButton(onClick = { commitIfEditing(); timer.skip() }) {
-                            SkipIcon(units.dp(Design.Icons.SKIP), units.dp(Design.Icons.LINE_WIDTH), P.textSecondary)
+                            SkipIcon(units.dp(Design.icons.iconSize("skip")), units.dp(ICON_LINE_WIDTH), Design.popover.color("textSecondary"))
                         }
                     }
                     Row(
                         Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(units.dp(P.COUNTER_SPACING), Alignment.CenterHorizontally),
+                        horizontalArrangement = Arrangement.spacedBy(units.dp(Design.popover["counterSpacing"]), Alignment.CenterHorizontally),
                     ) {
-                        Text("Today", style = fontStyle(Design.Fonts.counter, P.textSecondary))
-                        Text("${state.completedToday}", style = fontStyle(Design.Fonts.counter, accent))
+                        Text("Today", style = fontStyle(Design.fonts.font("counter"), Design.popover.color("textSecondary")))
+                        Text("${state.completedToday}", style = fontStyle(Design.fonts.font("counter"), accent))
                     }
-                    Box(Modifier.width(units.dp(P.FOOTER_SIDE_WIDTH)), contentAlignment = Alignment.CenterEnd) {
+                    Box(Modifier.width(units.dp(Design.popover["footerSideWidth"])), contentAlignment = Alignment.CenterEnd) {
                         IconButton(onClick = { commitIfEditing(); onOpenSettings() }) {
-                            GearIcon(units.dp(Design.Icons.SETTINGS), units.dp(Design.Icons.LINE_WIDTH), P.textSecondary)
+                            GearIcon(units.dp(Design.icons.iconSize("settings")), units.dp(ICON_LINE_WIDTH), Design.popover.color("textSecondary"))
                         }
                     }
                 }

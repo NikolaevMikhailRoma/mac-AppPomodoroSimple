@@ -23,6 +23,9 @@ public struct PhoneConfig: Codable, Equatable, Sendable {
     /// Switches, sliders and pickers. The Mac's take the system accent colour;
     /// this is the green one, which the phones have no setting for.
     public var tint = "#62BA46"
+    /// Under a number field, a stepper and a switch that is off: iOS's own
+    /// tertiarySystemFill in the dark, which Android has no name for.
+    public var fill = "#7676803D"
 
     public init() {}
 }

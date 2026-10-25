@@ -16,12 +16,12 @@ let package = Package(
         // Логика. Ни AppKit, ни SwiftUI, ни одного цвета — это импортируют тесты.
         .target(name: "PomodoroCore", path: "src/core"),
 
-        // Форма config.json и его загрузка. Сам файл лежит здесь же, ресурсом; Android читает его же.
+        // Форма config.json и его загрузка. Сам файл лежит здесь же, ресурсом; Android берёт его из той же папки.
         .target(
             name: "PomodoroConfig",
             dependencies: ["PomodoroCore"],
             path: "src/config",
-            resources: [.copy("config.json")]
+            resources: [.copy("Resources/config.json")]
         ),
 
         // Экраны на SwiftUI, общие для Мака и iPhone: таймер, настройки.

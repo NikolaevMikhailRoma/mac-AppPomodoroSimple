@@ -114,7 +114,8 @@
     "rowHeight": 44,
     "minTouch": 44,
     "ringTouchBand": 0.3,
-    "tint": "controls"
+    "tint": "controls",
+    "fill": "#7676803D"
   },
 
   "dial": {

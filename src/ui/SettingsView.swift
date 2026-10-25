@@ -12,7 +12,7 @@ public enum SettingsTab: CaseIterable, Identifiable, Sendable {
         self = match
     }
 
-    /// The short one where the long ones do not fit: on a phone.
+    /// A phone has room only for the short ones.
     func title(short: Bool) -> String {
         switch self {
         case .general: return "General"
@@ -66,12 +66,8 @@ public struct SettingsView<General: View, SoundNotes: View, Devices: View>: View
                 .padding(.horizontal, metrics.boxMargin)
                 .padding(.bottom, metrics.boxMargin)
 
-            ViewThatFits(in: .horizontal) {
-                tabBar(short: false)
-                tabBar(short: true)
-            }
-            .padding(.horizontal, metrics.boxMargin)
-            .padding(.top, metrics.boxTop - metrics.tabBarHeight / 2)
+            tabBar(short: AppConfig.onPhone)
+                .padding(.top, metrics.boxTop - metrics.tabBarHeight / 2)
         }
     }
 

@@ -48,6 +48,11 @@ android {
     }
 }
 
+// The look comes from the Mac's config.json, the one file all three apps read.
+androidComponents {
+    onVariants { it.sources.assets?.addStaticSourceDirectory(rootProject.file("../src/config/Resources").path) }
+}
+
 dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.material3)

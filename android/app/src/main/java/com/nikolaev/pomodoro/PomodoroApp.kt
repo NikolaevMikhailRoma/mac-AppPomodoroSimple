@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.nikolaev.pomodoro.sync.SyncClient
 import com.nikolaev.pomodoro.system.Notifier
+import com.nikolaev.pomodoro.ui.Design
 
 class PomodoroApp : Application() {
     lateinit var timer: TimerRepository
@@ -13,6 +14,7 @@ class PomodoroApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        Design.load(this)
         Notifier.createChannels(this)
         timer = TimerRepository(this)
         sync = SyncClient(this, timer)

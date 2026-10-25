@@ -20,6 +20,9 @@ import kotlin.math.sin
 // on the Mac (xmark.circle, forward.end, gearshape): Material icons are
 // heavier and would not match.
 
+/** The stroke of the drawn icons, in the popover's points: the ultralight symbols' weight. */
+const val ICON_LINE_WIDTH = 0.9
+
 @Composable
 private fun IconCanvas(size: Dp, line: Dp, draw: DrawScope.(Stroke) -> Unit) {
     Canvas(Modifier.size(size)) {
@@ -88,4 +91,18 @@ fun BackIcon(size: Dp, line: Dp, color: Color) = IconCanvas(size, line) { stroke
         lineTo(s * 0.62f, s * 0.82f)
     }
     drawPath(path, color, style = stroke)
+}
+
+/** The two small chevrons of a pop-up menu, as on the iPhone. */
+@Composable
+fun UpDownIcon(size: Dp, line: Dp, color: Color) = IconCanvas(size, line) { stroke ->
+    val s = this.size.minDimension
+    for ((tip, base) in listOf(0.12f to 0.4f, 0.88f to 0.6f)) {
+        val path = Path().apply {
+            moveTo(s * 0.25f, s * base)
+            lineTo(s * 0.5f, s * tip)
+            lineTo(s * 0.75f, s * base)
+        }
+        drawPath(path, color, style = stroke)
+    }
 }

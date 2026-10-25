@@ -1,91 +1,66 @@
 package com.nikolaev.pomodoro.ui
 
+import android.content.Context
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.nikolaev.pomodoro.core.Phase
+import org.json.JSONObject
 
 /**
- * The look of the app, in one place. Colours and timer-screen sizes are copied
- * from the Mac's config.json (measured off its screenshots); the timer-screen
- * numbers are the popover's points, which [Units] scales to the phone.
+ * The look of the app: config.json, the file the Mac and the iPhone read too
+ * (src/config/Resources, packed as an asset). Sections and keys are the
+ * file's own, and what each means is written in the Swift files beside it. Lengths
+ * are the Mac's points: the timer screen scales them to the phone ([Units]),
+ * the settings screen by `phone.settingsScale`.
  */
 object Design {
-    private val work = Color(0xFFEC958C)
-    private val pause = Color(0xFF8CD3A2)
+    private lateinit var root: JSONObject
 
-    /** Text and ring colour: red-ish while working, green on a break. */
-    fun accent(phase: Phase): Color = if (phase == Phase.WORK) work else pause
-
-    object Popover {
-        const val WIDTH = 256.0
-        const val HEIGHT = 335.0
-        const val PADDING = 14.0
-        const val HEADER_HEIGHT = 22.0
-        const val FOOTER_HEIGHT = 22.0
-        const val FOOTER_SIDE_WIDTH = 44.0
-        const val COUNTER_SPACING = 6.0
-        val background = Color(0xFF252525)
-        val textSecondary = Color(0xFFC8C8C8)
-        val textDim = Color(0xFF646464)
+    /** Before anything is drawn or posted: PomodoroApp.onCreate. */
+    fun load(context: Context) {
+        root = context.assets.open("config.json").use { JSONObject(it.reader().readText()) }
     }
 
-    object Ring {
-        const val DIAMETER = 196.0
-        const val LINE_WIDTH = 4.0
-        const val HANDLE_DIAMETER = 22.0
-        const val HANDLE_LINE_WIDTH = 2.0
-        /**
-         * How far inside the ring a touch still grabs it, as a fraction of the
-         * radius. The Mac takes clicks over the whole disc; on a phone that turns
-         * every stray touch near the digits into a new duration.
-         */
-        const val TOUCH_BAND = 0.3
-        val track = Color(0xFF3D3D3D)
-        const val DIGITS_OFFSET = -9.5
-        const val PLAY_OFFSET = 57.75
-        const val HINT_OFFSET = 26.0
-        const val PLAY_SIDE = 34.0
-        const val PLAY_LINE_WIDTH = 1.0
-        const val PLAY_TRIANGLE_RATIO = 0.866
-        const val PLAY_BAR_WIDTH_RATIO = 0.26
-        const val PLAY_BAR_HEIGHT_RATIO = 0.82
-        const val PLAY_GAP_RATIO = 0.24
+    val popover by lazy { Section("popover") }
+    val ring by lazy { Section("ring") }
+    val fonts by lazy { Section("fonts") }
+    val icons by lazy { Section("icons") }
+    val settings by lazy { Section("settingsWindow") }
+    val phone by lazy { Section("phone") }
+
+    /** Text and ring colour: red-ish while working, green on a break. */
+    fun accent(phase: Phase): Color = ring.color(if (phase == Phase.WORK) "workColor" else "breakColor")
+
+    class Section(name: String) {
+        private val o = root.getJSONObject(name)
+
+        operator fun get(key: String): Double = o.getDouble(key)
+
+        fun color(key: String): Color = parseColor(o.getString(key))
+
+        /** A font as config.json names it, "HelveticaNeue-Thin": a size and the weight in the name. */
+        fun font(key: String): Font = o.getJSONObject(key).let { Font(it.getDouble("size"), weight(it.getString("name"))) }
+
+        /** An icon's size; the icons themselves are drawn in Icons.kt. */
+        fun iconSize(key: String): Double = o.getJSONObject(key).getDouble("size")
     }
 
     data class Font(val size: Double, val weight: FontWeight)
 
-    object Fonts {
-        val digits = Font(55.0, FontWeight.Thin)
-        val counter = Font(20.0, FontWeight.Light)
-        val hint = Font(13.0, FontWeight.Light)
-        val phase = Font(15.0, FontWeight.Light)
+    /** "#RRGGBB", "#RRGGBBAA", or a name from the palette. */
+    private fun parseColor(value: String): Color {
+        val hex = root.getJSONObject("palette").optString(value, value).removePrefix("#")
+        val v = hex.toLong(16)
+        val rgb = if (hex.length == 8) v shr 8 else v
+        val alpha = if (hex.length == 8) (v and 0xFF).toInt() else 0xFF
+        return Color((rgb shr 16 and 0xFF).toInt(), (rgb shr 8 and 0xFF).toInt(), (rgb and 0xFF).toInt(), alpha)
     }
 
-    object Icons {
-        const val SETTINGS = 18.0
-        const val SKIP = 18.0
-        const val RESET = 22.0
-        const val LINE_WIDTH = 0.9
-    }
-
-    /** The settings screen is in dp: a phone needs finger-sized rows, not the Mac's 27 points. */
-    object Settings {
-        val background = Color(0xFF303132)
-        val box = Color(0xFF373738)
-        val border = Color(0xFF505051)
-        val label = Color(0xFFD1D1D1)
-        val secondary = Color(0xFF8C8C8C)
-        val tabBar = Color(0xFF333333)
-        val tabSelected = Color(0xFF666666)
-        val tabText = Color(0xFFE0E0E0)
-        val accent = work
-        const val MARGIN = 16.0
-        const val BOX_PADDING = 16.0
-        const val ROW_HEIGHT = 52.0
-        const val LABEL_SIZE = 16.0
-        const val SECONDARY_SIZE = 13.0
-        const val TAB_BAR_HEIGHT = 36.0
-        const val TAB_TEXT_SIZE = 14.0
-        const val CORNER_RADIUS = 6.0
+    private fun weight(fontName: String): FontWeight = when (fontName.substringAfterLast('-').lowercase()) {
+        "thin" -> FontWeight.Thin
+        "ultralight" -> FontWeight.ExtraLight
+        "light" -> FontWeight.Light
+        "medium" -> FontWeight.Medium
+        else -> FontWeight.Normal
     }
 }

@@ -20,7 +20,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import com.nikolaev.pomodoro.core.DialDrag
-import com.nikolaev.pomodoro.ui.Design.Ring as R
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -39,16 +38,16 @@ fun Ring(turnFraction: Double, color: Color, onDrag: (Double) -> Unit) {
 
     Canvas(
         Modifier
-            .size(units.dp(R.DIAMETER + R.HANDLE_DIAMETER))
+            .size(units.dp(Design.ring["diameter"] + Design.ring["handleDiameter"]))
             .pointerInput(units.scale) {
-                val radius = units.dp(R.DIAMETER / 2).toPx()
-                val handle = units.dp(R.HANDLE_DIAMETER / 2).toPx()
+                val radius = units.dp(Design.ring["diameter"] / 2).toPx()
+                val handle = units.dp(Design.ring["handleDiameter"] / 2).toPx()
                 awaitEachGesture {
                     val down = awaitFirstDown()
                     val center = Offset(size.width / 2f, size.height / 2f)
                     val distance = (down.position - center).getDistance()
                     // Only the band along the ring answers, not the whole disc.
-                    if (distance < radius * (1 - R.TOUCH_BAND).toFloat() || distance > radius + handle) {
+                    if (distance < radius * (1 - Design.phone["ringTouchBand"]).toFloat() || distance > radius + handle) {
                         return@awaitEachGesture
                     }
                     down.consume()
@@ -69,9 +68,9 @@ fun Ring(turnFraction: Double, color: Color, onDrag: (Double) -> Unit) {
                 }
             },
     ) {
-        val radius = units.dp(R.DIAMETER / 2).toPx()
-        val line = Stroke(units.dp(R.LINE_WIDTH).toPx())
-        drawCircle(R.track, radius, center, style = line)
+        val radius = units.dp(Design.ring["diameter"] / 2).toPx()
+        val line = Stroke(units.dp(Design.ring["lineWidth"]).toPx())
+        drawCircle(Design.ring.color("trackColor"), radius, center, style = line)
         drawArc(
             color,
             startAngle = -90f,
@@ -83,9 +82,9 @@ fun Ring(turnFraction: Double, color: Color, onDrag: (Double) -> Unit) {
         )
         val angle = fraction * 2 * PI
         val handleCenter = Offset(center.x + radius * sin(angle).toFloat(), center.y - radius * cos(angle).toFloat())
-        val handleRadius = units.dp(R.HANDLE_DIAMETER / 2).toPx()
-        val handleLine = units.dp(R.HANDLE_LINE_WIDTH).toPx()
-        drawCircle(Design.Popover.background, handleRadius, handleCenter)
+        val handleRadius = units.dp(Design.ring["handleDiameter"] / 2).toPx()
+        val handleLine = units.dp(Design.ring["handleLineWidth"]).toPx()
+        drawCircle(Design.popover.color("background"), handleRadius, handleCenter)
         drawCircle(color, handleRadius - handleLine / 2, handleCenter, style = Stroke(handleLine))
     }
 }
@@ -102,21 +101,21 @@ fun TransportButton(isRunning: Boolean, color: Color, onClick: () -> Unit) {
     val units = LocalUnits.current
     Canvas(
         Modifier
-            .size(units.dp(R.PLAY_SIDE))
+            .size(units.dp(Design.ring["playSide"]))
             .clickable(remember { MutableInteractionSource() }, indication = null, onClick = onClick),
     ) {
         val side = size.minDimension
-        val line = units.dp(R.PLAY_LINE_WIDTH).toPx()
+        val line = units.dp(Design.ring["playLineWidth"]).toPx()
         if (isRunning) {
-            val barW = side * R.PLAY_BAR_WIDTH_RATIO.toFloat()
-            val barH = side * R.PLAY_BAR_HEIGHT_RATIO.toFloat()
-            val gap = side * R.PLAY_GAP_RATIO.toFloat()
+            val barW = side * Design.ring["playBarWidthRatio"].toFloat()
+            val barH = side * Design.ring["playBarHeightRatio"].toFloat()
+            val gap = side * Design.ring["playGapRatio"].toFloat()
             val left = (side - (2 * barW + gap)) / 2
             for (x in listOf(left, left + barW + gap)) {
                 drawRoundRect(color, Offset(x, (side - barH) / 2), Size(barW, barH), CornerRadius(line), style = Stroke(line))
             }
         } else {
-            val width = side * R.PLAY_TRIANGLE_RATIO.toFloat()
+            val width = side * Design.ring["playTriangleRatio"].toFloat()
             val left = (side - width) / 2
             val triangle = Path().apply {
                 moveTo(left, 0f)

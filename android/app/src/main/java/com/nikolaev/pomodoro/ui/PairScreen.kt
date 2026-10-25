@@ -17,14 +17,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -51,7 +48,6 @@ import com.google.zxing.ReaderException
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.qrcode.QRCodeReader
 import com.nikolaev.pomodoro.core.PairLink
-import com.nikolaev.pomodoro.ui.Design.Settings as S
 import java.util.concurrent.Executors
 
 /**
@@ -77,47 +73,45 @@ fun PairScreen(onLink: (PairLink) -> Unit, onBack: () -> Unit) {
         onPauseOrDispose {}
     }
 
-    val label = TextStyle(color = S.label, fontSize = S.LABEL_SIZE.sp)
-    Column(Modifier.fillMaxSize().background(S.background).safeDrawingPadding().padding(horizontal = S.MARGIN.dp)) {
-        Row(Modifier.fillMaxWidth().height(56.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(40.dp).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
-                BackIcon(22.dp, 1.5.dp, S.label)
+    val s = Design.settings
+    val label = textStyle((s["labelSize"] * Design.phone["settingsScale"]).sp, s.color("labelColor"))
+    Column(Modifier.fillMaxSize().background(s.color("background")).safeDrawingPadding()) {
+        TitleBar("Pair with Mac", onBack)
+        Column(Modifier.padding(horizontal = Design.phone["margin"].dp)) {
+            Text(
+                "On the Mac: Pomodoro → Settings → Devices → Pair a Phone. Then point the camera at the code.",
+                style = label,
+                modifier = Modifier.padding(vertical = 16.dp),
+            )
+            Box(
+                Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(s["cornerRadius"].dp)).background(s.color("boxBackground")),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (allowed) {
+                    Scanner(onLink)
+                } else {
+                    Text(
+                        "Pomodoro needs the camera only to read this code.",
+                        style = label.copy(color = s.color("sectionHeaderColor")),
+                        modifier = Modifier.padding(24.dp),
+                    )
+                }
             }
-            Text("Pair with Mac", style = label.copy(fontSize = 20.sp))
-        }
-        Text(
-            "On the Mac: Pomodoro → Settings → Devices → Pair a Phone. Then point the camera at the code.",
-            style = label,
-            modifier = Modifier.padding(vertical = 16.dp),
-        )
-        Box(
-            Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(S.CORNER_RADIUS.dp)).background(S.box),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (allowed) {
-                Scanner(onLink)
-            } else {
+            if (!allowed) {
                 Text(
-                    "Pomodoro needs the camera only to read this code.",
-                    style = label.copy(color = S.secondary),
-                    modifier = Modifier.padding(24.dp),
+                    "Allow the camera",
+                    style = label.copy(color = Design.phone.color("tint")),
+                    modifier = Modifier.clickable {
+                        if (refused) {
+                            context.startActivity(
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
+                            )
+                        } else {
+                            ask.launch(Manifest.permission.CAMERA)
+                        }
+                    }.padding(vertical = 16.dp),
                 )
             }
-        }
-        if (!allowed) {
-            Text(
-                "Allow the camera",
-                style = label.copy(color = S.accent),
-                modifier = Modifier.clickable {
-                    if (refused) {
-                        context.startActivity(
-                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
-                        )
-                    } else {
-                        ask.launch(Manifest.permission.CAMERA)
-                    }
-                }.padding(vertical = 16.dp),
-            )
         }
     }
 }
