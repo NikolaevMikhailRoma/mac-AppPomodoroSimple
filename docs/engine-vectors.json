@@ -1,0 +1,83 @@
+{
+  "_note": "The timer engine's behaviour, run by the Swift tests (tests/EngineVectorTests.swift) and the Android ones (EngineVectorTest.kt), so the two engines cannot drift apart. `at` and the times in `expect` (endsAt, changedAt) are seconds from the scenario's start. `expect` lists state fields as docs/SYNC.md writes them; `events` the events a step returned.",
+  "scenarios": [
+    {
+      "name": "a work interval runs out into a short break, and counts",
+      "settings": { "workMinutes": 25, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
+      "autoStart": false,
+      "steps": [
+        { "at": 0, "do": "start", "events": [], "expect": { "runState": "running", "endsAt": 1500, "changedAt": 0 } },
+        { "at": 600, "do": "update", "events": [], "expect": { "remaining": 900, "changedAt": 0 } },
+        { "at": 1500, "do": "update", "events": ["finished work", "started shortBreak"],
+          "expect": { "phase": "shortBreak", "runState": "idle", "phaseDuration": 300, "remaining": 300, "endsAt": null,
+                      "completedToday": 1, "sinceLongBreak": 1, "changedAt": 1500 } }
+      ]
+    },
+    {
+      "name": "pause keeps what is left, and start goes on from it",
+      "settings": { "workMinutes": 25, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
+      "autoStart": false,
+      "steps": [
+        { "at": 0, "do": "start", "expect": { "runState": "running" } },
+        { "at": 100, "do": "pause", "expect": { "runState": "paused", "remaining": 1400, "endsAt": null, "changedAt": 100 } },
+        { "at": 200, "do": "start", "expect": { "runState": "running", "endsAt": 1600, "changedAt": 200 } }
+      ]
+    },
+    {
+      "name": "skip finishes work early and counts it; a skipped break does not count",
+      "settings": { "workMinutes": 25, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 2 },
+      "autoStart": false,
+      "steps": [
+        { "at": 0, "do": "start", "expect": { "runState": "running" } },
+        { "at": 100, "do": "skip", "events": ["finished work", "started shortBreak"],
+          "expect": { "phase": "shortBreak", "runState": "idle", "completedToday": 1, "sinceLongBreak": 1, "changedAt": 100 } },
+        { "at": 101, "do": "skip", "events": ["finished shortBreak", "started work"],
+          "expect": { "phase": "work", "completedToday": 1, "sinceLongBreak": 1 } },
+        { "at": 102, "do": "skip", "events": ["finished work", "started longBreak"],
+          "expect": { "phase": "longBreak", "phaseDuration": 900, "completedToday": 2, "sinceLongBreak": 0 } },
+        { "at": 103, "do": "skip", "events": ["finished longBreak", "started work"], "expect": { "phase": "work", "completedToday": 2 } }
+      ]
+    },
+    {
+      "name": "with auto-start the next interval starts when the end is noticed, dated when it ran out",
+      "settings": { "workMinutes": 25, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
+      "autoStart": true,
+      "steps": [
+        { "at": 0, "do": "start", "expect": { "endsAt": 1500 } },
+        { "at": 1505, "do": "update", "events": ["finished work", "started shortBreak"],
+          "expect": { "phase": "shortBreak", "runState": "running", "endsAt": 1805, "changedAt": 1500 } }
+      ]
+    },
+    {
+      "name": "stop takes the phase back to its full length",
+      "settings": { "workMinutes": 25, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
+      "autoStart": false,
+      "steps": [
+        { "at": 0, "do": "start", "expect": { "runState": "running" } },
+        { "at": 100, "do": "stop", "expect": { "phase": "work", "runState": "idle", "remaining": 1500, "endsAt": null, "changedAt": 100 } }
+      ]
+    },
+    {
+      "name": "a new duration while running restarts the countdown from it",
+      "settings": { "workMinutes": 25, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
+      "autoStart": false,
+      "steps": [
+        { "at": 0, "do": "start", "expect": { "runState": "running" } },
+        { "at": 100, "do": "setDuration", "seconds": 600,
+          "expect": { "runState": "running", "phaseDuration": 600, "remaining": 600, "endsAt": 700, "changedAt": 100 } }
+      ]
+    },
+    {
+      "name": "new interval settings change an idle phase, not a running one",
+      "settings": { "workMinutes": 25, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
+      "autoStart": false,
+      "steps": [
+        { "at": 10, "do": "applySettings", "settings": { "workMinutes": 40, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
+          "expect": { "runState": "idle", "phaseDuration": 2400, "remaining": 2400, "changedAt": 10 } },
+        { "at": 20, "do": "start", "expect": { "endsAt": 2420 } },
+        { "at": 30, "do": "applySettings", "settings": { "workMinutes": 30, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
+          "expect": { "phaseDuration": 2400, "endsAt": 2420, "changedAt": 20 } }
+      ]
+    }
+  ]
+}
