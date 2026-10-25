@@ -1,5 +1,6 @@
 import PomodoroConfig
 import PomodoroCore
+import PomodoroUI
 import SwiftUI
 
 /// The one timer and the one connection to the Mac, for the screen and the
@@ -47,13 +48,13 @@ struct PomodoroApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationStack(path: $path) {
-                TimerScreen(timer: Shared.timer, config: Shared.config,
-                            onStart: { Task { await Shared.alerts.askForNotifications() } }) { path.append(.settings) }
+                TimerView(timer: Shared.timer, config: Shared.config,
+                          onStart: { Task { await Shared.alerts.askForNotifications() } }) { path.append(.settings) }
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationDestination(for: Route.self) { route in
                         switch route {
                         case .settings:
-                            SettingsScreen(timer: Shared.timer, alerts: Shared.alerts, sync: Shared.sync) { path.append(.pair) }
+                            SettingsScreen(timer: Shared.timer, alerts: Shared.alerts, sync: Shared.sync, config: Shared.config) { path.append(.pair) }
                         case .pair:
                             PairScreen { link in
                                 Shared.sync.pair(link)
@@ -62,7 +63,7 @@ struct PomodoroApp: App {
                         }
                     }
             }
-            .tint(Theme.accent)
+            .tint(Color(hex: Shared.config.phone.tint))
             .preferredColorScheme(.dark)
             .onChange(of: scenePhase, initial: true) { _, phase in
                 switch phase {

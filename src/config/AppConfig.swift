@@ -19,6 +19,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public var ring = RingConfig()
     public var fonts = FontsConfig()
     public var settingsWindow = SettingsWindowConfig()
+    public var phone = PhoneConfig()
     public var dial = DialConfig()
     /// Durations for the first launch, until the user changes them in settings.
     public var intervals = IntervalSettings()
@@ -81,6 +82,8 @@ public enum Palette {
         "breakSoft": "#8CD3A2",
         // Timer stopped.
         "idle": "#9B9B9B",
+        // The phones' switches and sliders: the Mac's green system accent.
+        "controls": "#62BA46",
     ]
 }
 

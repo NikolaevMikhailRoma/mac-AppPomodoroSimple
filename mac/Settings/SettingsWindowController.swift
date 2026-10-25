@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import PomodoroCore
 import PomodoroConfig
+import PomodoroUI
 
 @MainActor
 final class SettingsWindowController {
@@ -28,8 +29,16 @@ final class SettingsWindowController {
         ) { [weak sync] _ in
             MainActor.assumeIsolated { sync?.endPairing() }
         }
+        let settings = Binding(get: { timer.settings }, set: { timer.update($0) })
         window.contentView = NSHostingView(
-            rootView: SettingsView(timer: timer, loginItem: loginItem, config: config, sync: sync, tab: tab)
+            rootView: SettingsView(settings: settings, sound: timer.sound, config: config, tab: tab) {
+                GeneralTab(settings: settings, loginItem: loginItem, metrics: metrics)
+            } soundNotes: {
+                EmptyView()
+            } devices: {
+                if let sync { DevicesTab(sync: sync, metrics: metrics) }
+            }
+            .frame(width: metrics.width, height: metrics.height)
         )
     }
 

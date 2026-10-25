@@ -21,6 +21,8 @@ targets:
         product: PomodoroCore
       - package: Pomodoro
         product: PomodoroConfig
+      - package: Pomodoro
+        product: PomodoroUI
       - target: LiveActivity
     info:
       path: Pomodoro/Info.plist
@@ -48,6 +50,10 @@ targets:
     type: app-extension
     platform: iOS
     sources: [LiveActivity, Shared]
+    dependencies:
+      # Color(hex:) only.
+      - package: Pomodoro
+        product: PomodoroUI
     info:
       path: LiveActivity/Info.plist
       properties:

@@ -10,6 +10,7 @@ let package = Package(
         .executable(name: "Pomodoro", targets: ["Pomodoro"]),
         .library(name: "PomodoroCore", targets: ["PomodoroCore"]),
         .library(name: "PomodoroConfig", targets: ["PomodoroConfig"]),
+        .library(name: "PomodoroUI", targets: ["PomodoroUI"]),
     ],
     targets: [
         // Логика. Ни AppKit, ни SwiftUI, ни одного цвета — это импортируют тесты.
@@ -23,10 +24,17 @@ let package = Package(
             resources: [.copy("config.json")]
         ),
 
+        // Экраны на SwiftUI, общие для Мака и iPhone: таймер, настройки.
+        .target(
+            name: "PomodoroUI",
+            dependencies: ["PomodoroCore", "PomodoroConfig"],
+            path: "src/ui"
+        ),
+
         // Мак: строка меню, окна, системные службы.
         .executableTarget(
             name: "Pomodoro",
-            dependencies: ["PomodoroCore", "PomodoroConfig"],
+            dependencies: ["PomodoroCore", "PomodoroConfig", "PomodoroUI"],
             path: "mac",
             exclude: ["Info.plist", "Resources"]
         ),

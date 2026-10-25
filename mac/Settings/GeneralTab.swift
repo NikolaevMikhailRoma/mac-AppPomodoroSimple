@@ -1,7 +1,9 @@
 import SwiftUI
 import PomodoroCore
 import PomodoroConfig
+import PomodoroUI
 
+/// The Mac's own general settings, around the one every platform has.
 struct GeneralTab: View {
     @Binding var settings: PomodoroCore.Settings
     let loginItem: LoginItem
@@ -9,7 +11,7 @@ struct GeneralTab: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            FormRow(label: "Appearance", metrics: metrics) {
+            FormRow("Appearance", metrics: metrics) {
                 Picker("", selection: $settings.general.appearance) {
                     ForEach(Appearance.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
@@ -17,36 +19,17 @@ struct GeneralTab: View {
                 .frame(width: metrics.controlWidth)
                 .onChange(of: settings.general.appearance) { _, new in Theme.applyAppearance(new) }
             }
-            FormRow(label: "Launch at startup", metrics: metrics) {
-                Toggle("", isOn: Binding(
-                    get: { loginItem.isEnabled },
-                    set: { loginItem.set($0) }
-                ))
-                .toggleStyle(.checkbox)
-                .labelsHidden()
-            }
+            ToggleRow("Launch at startup", isOn: Binding(get: { loginItem.isEnabled }, set: { loginItem.set($0) }),
+                      metrics: metrics)
             if loginItem.isBlockedBySystem {
-                HStack(spacing: metrics.rowSpacing) {
-                    Text("Turned off in System Settings → Login Items")
-                        .font(.system(size: metrics.sectionHeaderSize))
-                        .foregroundStyle(Theme.swiftUIColor(metrics.sectionHeaderColor, fallback: .secondaryLabelColor))
-                    Spacer(minLength: metrics.rowSpacing)
-                    Button("Open") { loginItem.openSystemSettings() }
+                HintRow("Turned off in System Settings → Login Items", button: "Open", metrics: metrics) {
+                    loginItem.openSystemSettings()
                 }
-                .frame(height: metrics.rowHeight)
             }
-            FormRow(label: "Show timer in menu bar", metrics: metrics) {
-                Toggle("", isOn: $settings.general.showTimerInMenuBar)
-                    .toggleStyle(.checkbox)
-                    .labelsHidden()
-            }
-            FormRow(label: "Auto-start next interval", metrics: metrics) {
-                Toggle("", isOn: $settings.general.autoStartNextInterval)
-                    .toggleStyle(.checkbox)
-                    .labelsHidden()
-            }
+            ToggleRow("Show timer in menu bar", isOn: $settings.general.showTimerInMenuBar, metrics: metrics)
+            AutoStartRow(settings: $settings, metrics: metrics)
 
-            SectionHeader(title: "Application", metrics: metrics)
+            SectionHeader("Application", metrics: metrics)
 
             Button("Quit Pomodoro") { NSApp.terminate(nil) }
                 .frame(maxWidth: .infinity)

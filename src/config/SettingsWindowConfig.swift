@@ -8,6 +8,8 @@ public struct SettingsWindowConfig: Codable, Equatable, Sendable {
     public var boxMargin = 20.0
     /// The content's inset inside the box.
     public var boxPadding = 24.0
+    /// The content's inset from the box's top edge, the tab bar's lower half included.
+    public var contentTop = 24.0
     /// The top of the box. The tab bar sits on this line, half inside it.
     public var boxTop = 42.0
     public var rowHeight = 27.0

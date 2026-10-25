@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import PomodoroCore
 import PomodoroConfig
+import PomodoroUI
 
 @MainActor
 final class StatusItemController: NSObject {
@@ -32,7 +33,7 @@ final class StatusItemController: NSObject {
             height: config.popover.height
         )
         popover.contentViewController = NSHostingController(
-            rootView: TimerPopoverView(
+            rootView: TimerView(
                 timer: timer,
                 config: config,
                 openSettings: { [weak self] in
@@ -40,6 +41,7 @@ final class StatusItemController: NSObject {
                     openSettings()
                 }
             )
+            .frame(width: config.popover.width, height: config.popover.height)
         )
 
         item.button?.target = self

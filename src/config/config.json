@@ -6,7 +6,8 @@
     "workSoft": "#EC958C",
     "break": "#30A46C",
     "breakSoft": "#8CD3A2",
-    "idle": "#9B9B9B"
+    "idle": "#9B9B9B",
+    "controls": "#62BA46"
   },
 
   "icons": {
@@ -73,6 +74,7 @@
     "height": 400,
     "boxMargin": 20,
     "boxPadding": 24,
+    "contentTop": 24,
     "boxTop": 42,
     "rowHeight": 27,
     "rowSpacing": 8,
@@ -102,6 +104,17 @@
     "labelSize": 15,
     "sectionHeaderColor": "#8C8C8C",
     "sectionHeaderSize": 13
+  },
+
+  "phone": {
+    "settingsScale": 1.1,
+    "margin": 16,
+    "boxPadding": 16,
+    "top": 8,
+    "rowHeight": 44,
+    "minTouch": 44,
+    "ringTouchBand": 0.3,
+    "tint": "controls"
   },
 
   "dial": {

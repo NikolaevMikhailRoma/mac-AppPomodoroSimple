@@ -1,6 +1,6 @@
-import SwiftUI
-import PomodoroCore
 import PomodoroConfig
+import PomodoroCore
+import SwiftUI
 
 struct RingView: View {
     let turnFraction: Double
@@ -8,6 +8,8 @@ struct RingView: View {
     let color: Color
     let trackColor: Color
     let backgroundColor: Color
+    /// The band along the ring that takes a touch, as a fraction of the radius; nil takes the whole disc.
+    let touchBand: Double?
     let onDrag: (Double) -> Void
 
     @State private var drag: DialDrag?
@@ -32,7 +34,7 @@ struct RingView: View {
         .frame(width: ring.diameter, height: ring.diameter)
         // The handle is centred on the frame's edge, so its outer half would
         // fall outside the hit area. Widen that area by the same radius.
-        .contentShape(Circle().inset(by: -ring.handleDiameter / 2))
+        .contentShape(Band(inner: 1 - (touchBand ?? 1), outset: ring.handleDiameter / 2), eoFill: true)
         .gesture(dragGesture)
     }
 
@@ -65,15 +67,28 @@ struct RingView: View {
     /// works for points outside the circle too, which is what makes grabbing the
     /// handle possible.
     static func turnFraction(of point: CGPoint, around center: CGPoint) -> Double {
-        let dx = point.x - center.x
-        let dy = point.y - center.y
-        var angle = atan2(dx, -dy)
+        var angle = atan2(point.x - center.x, center.y - point.y)
         if angle < 0 { angle += 2 * .pi }
         return angle / (2 * .pi)
     }
 }
 
-struct PlayTriangle: Shape {
+/// The ring's touch area: a disc with a hole, filled even-odd. No hole takes the whole disc.
+private struct Band: Shape {
+    let inner: Double
+    let outset: Double
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.addEllipse(in: rect.insetBy(dx: -outset, dy: -outset))
+        guard inner > 0 else { return path }
+        let hole = rect.width / 2 * inner
+        path.addEllipse(in: CGRect(x: rect.midX - hole, y: rect.midY - hole, width: hole * 2, height: hole * 2))
+        return path
+    }
+}
+
+private struct PlayTriangle: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: CGPoint(x: rect.minX, y: rect.minY))
@@ -90,6 +105,7 @@ struct TransportButton: View {
     let isRunning: Bool
     let ring: RingConfig
     let color: Color
+    let minTouch: Double
     let action: () -> Void
 
     private var side: Double { ring.playSide }
@@ -104,18 +120,16 @@ struct TransportButton: View {
                     }
                 } else {
                     PlayTriangle()
-                        .stroke(
-                            color,
-                            style: StrokeStyle(lineWidth: ring.playLineWidth, lineJoin: .round)
-                        )
+                        .stroke(color, style: StrokeStyle(lineWidth: ring.playLineWidth, lineJoin: .round))
                         .frame(width: side * ring.playTriangleRatio, height: side)
                 }
             }
-            .frame(width: side, height: side)
+            .frame(width: max(side, minTouch), height: max(side, minTouch))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .help(isRunning ? "Pause" : "Start")
+        .accessibilityLabel(isRunning ? "Pause" : "Start")
     }
 
     private var bar: some View {

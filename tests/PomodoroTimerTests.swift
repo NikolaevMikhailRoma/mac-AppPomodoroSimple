@@ -96,6 +96,17 @@ struct PomodoroTimerTests {
         }
     }
 
+    @Test("a button here goes out once")
+    func sendsOwnChanges() {
+        let s = Setup(hub: false)
+        var sent: [EngineState] = []
+        s.timer.onStateChange = { sent.append($0) }
+        s.timer.toggle()
+        s.timer.tick()
+        #expect(sent.count == 1)
+        #expect(sent.first?.runState == .running)
+    }
+
     @Test("the user's new intervals get a time and go out; sound changes do not")
     func stampsIntervals() {
         let s = Setup(hub: false)

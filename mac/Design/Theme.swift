@@ -18,17 +18,6 @@ enum Theme {
         return NSColor(srgbRed: r, green: g, blue: b, alpha: a)
     }
 
-    static func swiftUIColor(_ hex: String, fallback: NSColor = .labelColor) -> Color {
-        Color(nsColor: color(hex, fallback: fallback))
-    }
-
-    static func font(_ token: FontToken) -> Font {
-        guard let nsFont = NSFont(name: token.name, size: token.size) else {
-            return .system(size: token.size, weight: .thin)
-        }
-        return Font(nsFont)
-    }
-
     /// A weight name from the config as an NSFont.Weight. One table for fonts
     /// and icons alike — SF Symbols take a weight of the same type.
     static func weight(named name: String) -> NSFont.Weight {
@@ -42,30 +31,6 @@ enum Theme {
         case "bold": return .bold
         default: return .regular
         }
-    }
-
-    /// The same for SwiftUI, which has a weight type of its own. The two tables
-    /// must agree, or one config key gives different weights in the menu bar and
-    /// in the popover.
-    static func fontWeight(named name: String) -> Font.Weight {
-        switch name.lowercased() {
-        case "ultralight": return .ultraLight
-        case "thin": return .thin
-        case "light": return .light
-        case "regular": return .regular
-        case "medium": return .medium
-        case "semibold": return .semibold
-        case "bold": return .bold
-        default: return .regular
-        }
-    }
-
-    /// An icon for SwiftUI. Size and weight come from the config; the colour is
-    /// set by the caller, because it follows the phase, not the icon.
-    static func icon(_ icon: IconConfig, color: Color) -> some View {
-        Image(systemName: icon.symbol)
-            .font(.system(size: icon.size, weight: fontWeight(named: icon.weight)))
-            .foregroundStyle(color)
     }
 
     /// The same icon for AppKit: the menu bar draws an NSImage, not a View.

@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import PomodoroCore
 import PomodoroConfig
+import PomodoroUI
 
 @MainActor
 enum Snapshot {
@@ -11,7 +12,8 @@ enum Snapshot {
         let config = AppConfig.load()
 
         if let path = path(for: "--snapshot") {
-            return render(TimerPopoverView(timer: timer(config), config: config, openSettings: {}), to: path)
+            return render(TimerView(timer: timer(config), config: config, openSettings: {})
+                .frame(width: config.popover.width, height: config.popover.height), to: path)
         }
         if let file = path(for: "--snapshot-settings") {
             let tab = path(for: "--tab").flatMap(SettingsTab.init(name:)) ?? .general

@@ -1,4 +1,5 @@
 import ActivityKit
+import PomodoroUI
 import SwiftUI
 import WidgetKit
 

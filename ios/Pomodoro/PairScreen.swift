@@ -1,5 +1,7 @@
 import AVFoundation
+import PomodoroConfig
 import PomodoroCore
+import PomodoroUI
 import SwiftUI
 
 /// The camera, for the QR on the Mac only. The permission is asked here, the
@@ -10,11 +12,13 @@ struct PairScreen: View {
     @State private var access = AVCaptureDevice.authorizationStatus(for: .video)
     @State private var done = false
 
+    private let metrics = Shared.config.settingsMetrics
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("On the Mac: Pomodoro → Settings → Devices → Pair a Phone. Then point the camera at the code.")
             ZStack {
-                Theme.box
+                Color(hex: metrics.boxBackground)
                 if access == .authorized {
                     QRScanner { text in
                         guard !done, let link = PairLink(link: text) else { return }
@@ -23,12 +27,12 @@ struct PairScreen: View {
                     }
                 } else {
                     Text("Pomodoro needs the camera only to read this code.")
-                        .foregroundStyle(Theme.secondary)
+                        .foregroundStyle(Color(hex: metrics.sectionHeaderColor))
                         .padding(24)
                 }
             }
             .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius))
             if access == .denied || access == .restricted {
                 // iOS asks only once; after a refusal only Settings can allow it.
                 Button("Allow the camera") {
@@ -37,10 +41,10 @@ struct PairScreen: View {
             }
             Spacer()
         }
-        .padding(16)
-        .font(Theme.labelFont)
-        .foregroundStyle(Theme.label)
-        .background(Theme.background.ignoresSafeArea())
+        .padding(metrics.boxMargin)
+        .font(.system(size: metrics.labelSize))
+        .foregroundStyle(Color(hex: metrics.labelColor))
+        .background(Color(hex: metrics.background).ignoresSafeArea())
         .navigationTitle("Pair with Mac")
         .navigationBarTitleDisplayMode(.inline)
         .task {
