@@ -6,9 +6,6 @@ import PomodoroCore
 /// of the intervals after it. The sound comes with them.
 @MainActor
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
-    /// Ends scheduled ahead. TimerStore.tick catches up as many.
-    static let scheduledAhead = 8
-
     private let center = UNUserNotificationCenter.current()
 
     override init() {
@@ -28,7 +25,7 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         center.removeAllPendingNotificationRequests()
         guard sound.notificationsEnabled else { return }
         var future = engine
-        for index in 0..<Self.scheduledAhead {
+        for index in 0..<PomodoroTimer.endsAhead {
             guard future.runState == .running, let endsAt = future.state.endsAt else { return }
             let finished = future.phase
             _ = future.update(now: endsAt)

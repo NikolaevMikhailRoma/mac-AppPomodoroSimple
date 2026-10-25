@@ -3,7 +3,7 @@ import PomodoroCore
 import PomodoroConfig
 
 struct TimerPopoverView: View {
-    let timer: TimerController
+    let timer: PomodoroTimer
     let config: AppConfig
     let openSettings: () -> Void
 
@@ -157,7 +157,7 @@ struct TimerPopoverView: View {
             HStack(spacing: popover.counterSpacing) {
                 Text("Today")
                     .foregroundStyle(secondary)
-                Text("\(timer.completedToday)")
+                Text("\(timer.state.completedToday)")
                     .foregroundStyle(accent)
             }
             .font(Theme.font(config.fonts.counter))

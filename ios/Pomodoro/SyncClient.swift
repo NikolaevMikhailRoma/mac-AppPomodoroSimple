@@ -29,7 +29,7 @@ final class SyncClient {
     private(set) var status: Status
 
     @ObservationIgnored private let store = PairedMac()
-    @ObservationIgnored private let timer: TimerStore
+    @ObservationIgnored private let timer: PomodoroTimer
     @ObservationIgnored private var worker: Task<Void, Never>?
     /// The worker's connection, open or being opened.
     @ObservationIgnored private var link: Link?
@@ -38,7 +38,7 @@ final class SyncClient {
     @ObservationIgnored private var pendingState: EngineState?
     @ObservationIgnored private var lastStateSent = Date.distantPast
 
-    init(timer: TimerStore) {
+    init(timer: PomodoroTimer) {
         self.timer = timer
         status = store.macId == nil ? .notPaired : .searching
         timer.onStateChange = { [weak self] in self?.queue($0) }

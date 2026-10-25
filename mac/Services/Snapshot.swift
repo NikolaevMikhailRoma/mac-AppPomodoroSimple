@@ -11,14 +11,21 @@ enum Snapshot {
         let config = AppConfig.load()
 
         if let path = path(for: "--snapshot") {
-            let timer = TimerController(config: config, settings: Settings())
-            return render(TimerPopoverView(timer: timer, config: config, openSettings: {}), to: path)
+            return render(TimerPopoverView(timer: timer(config), config: config, openSettings: {}), to: path)
         }
         if let file = path(for: "--snapshot-settings") {
             let tab = path(for: "--tab").flatMap(SettingsTab.init(name:)) ?? .general
             return renderSettingsWindow(tab: tab, to: file)
         }
         return false
+    }
+
+    /// Defaults as on a first launch, whatever this Mac has saved.
+    private static func timer(_ config: AppConfig) -> PomodoroTimer {
+        let defaults = UserDefaults(suiteName: "PomodoroSnapshot")!
+        defaults.removePersistentDomain(forName: "PomodoroSnapshot")
+        return PomodoroTimer(intervals: config.intervals, dial: config.dial.dial, sound: SoundPlayer(),
+                             alerts: Notifier(), isHub: true, defaults: defaults)
     }
 
     private static func path(for flag: String) -> String? {
@@ -43,10 +50,8 @@ enum Snapshot {
 
     private static func renderSettingsWindow(tab: SettingsTab, to path: String) -> Bool {
         let config = AppConfig.load()
-        let defaults = UserDefaults(suiteName: "PomodoroSnapshot")!
-        defaults.removePersistentDomain(forName: "PomodoroSnapshot")
         let controller = SettingsWindowController(
-            store: SettingsStore(defaults: defaults, fallback: Settings(intervals: config.intervals)),
+            timer: timer(config),
             loginItem: LoginItem(),
             config: config,
             tab: tab

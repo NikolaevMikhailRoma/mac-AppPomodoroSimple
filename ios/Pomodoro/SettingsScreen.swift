@@ -4,7 +4,8 @@ import SwiftUI
 /// The Mac settings window as a phone screen: the same tabs over the same
 /// box, and a tab for the Mac itself, as on Android.
 struct SettingsScreen: View {
-    let timer: TimerStore
+    let timer: PomodoroTimer
+    let alerts: PhoneAlerts
     let sync: SyncClient
     let pair: () -> Void
 
@@ -67,8 +68,8 @@ struct SettingsScreen: View {
 
     @ViewBuilder private var general: some View {
         ToggleRow("Auto-start next interval", isOn: setting(\.general.autoStartNextInterval))
-        ToggleRow("Show timer on the Lock Screen", isOn: Binding(get: { timer.showOnLockScreen }, set: { timer.setShowOnLockScreen($0) }))
-        if timer.showOnLockScreen, timer.liveActivitiesDenied {
+        ToggleRow("Show timer on the Lock Screen", isOn: Binding(get: { alerts.showOnLockScreen }, set: { alerts.setShowOnLockScreen($0) }))
+        if alerts.showOnLockScreen, alerts.liveActivitiesDenied {
             BlockedHint(text: "Live Activities are off for Pomodoro in iOS Settings", settings: UIApplication.openSettingsURLString)
         }
     }
@@ -121,7 +122,7 @@ struct SettingsScreen: View {
             .padding(.top, 22)
             .padding(.bottom, 4)
         ToggleRow("Show a notification when an interval ends", isOn: setting(\.sound.notificationsEnabled))
-        if timer.settings.sound.notificationsEnabled, timer.notificationsDenied {
+        if timer.settings.sound.notificationsEnabled, alerts.notificationsDenied {
             BlockedHint(text: "Notifications are off for Pomodoro in iOS Settings",
                         settings: UIApplication.openNotificationSettingsURLString)
         }
@@ -132,15 +133,14 @@ struct SettingsScreen: View {
     }
 
     private func soundPicker(_ path: WritableKeyPath<Settings, String>) -> some View {
-        let player = timer.sound
-        return Picker("Sound", selection: Binding(
-            get: { player.resolve(timer.settings[keyPath: path])?.key ?? "" },
-            set: { key in
-                player.play(key, volume: timer.settings.sound.volume)
-                setting(path).wrappedValue = key
+        Picker("Sound", selection: Binding(
+            get: { timer.settings[keyPath: path] },
+            set: { name in
+                timer.sound.play(name, volume: timer.settings.sound.volume)
+                setting(path).wrappedValue = name
             }
         )) {
-            ForEach(player.available, id: \.self) { Text($0.title).tag($0.key) }
+            ForEach(timer.sound.names, id: \.self) { Text(SoundPlayer.title($0)).tag($0) }
         }
         .pickerStyle(.menu)
     }

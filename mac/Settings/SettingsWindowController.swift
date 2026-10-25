@@ -9,7 +9,7 @@ final class SettingsWindowController {
     private let loginItem: LoginItem
     private var closeObserver: NSObjectProtocol?
 
-    init(store: SettingsStore, loginItem: LoginItem, config: AppConfig, sync: SyncServer? = nil, tab: SettingsTab = .general) {
+    init(timer: PomodoroTimer, loginItem: LoginItem, config: AppConfig, sync: SyncServer? = nil, tab: SettingsTab = .general) {
         self.loginItem = loginItem
         let metrics = config.settingsWindow
         window = NSWindow(
@@ -29,7 +29,7 @@ final class SettingsWindowController {
             MainActor.assumeIsolated { sync?.endPairing() }
         }
         window.contentView = NSHostingView(
-            rootView: SettingsView(store: store, loginItem: loginItem, config: config, sync: sync, tab: tab)
+            rootView: SettingsView(timer: timer, loginItem: loginItem, config: config, sync: sync, tab: tab)
         )
     }
 

@@ -3,15 +3,15 @@ import PomodoroCore
 import PomodoroConfig
 
 struct SettingsView: View {
-    @Bindable var store: SettingsStore
+    let timer: PomodoroTimer
     let loginItem: LoginItem
     let config: AppConfig
     let sync: SyncServer?
 
     @State private var tab: SettingsTab
 
-    init(store: SettingsStore, loginItem: LoginItem, config: AppConfig, sync: SyncServer? = nil, tab: SettingsTab = .general) {
-        _store = Bindable(wrappedValue: store)
+    init(timer: PomodoroTimer, loginItem: LoginItem, config: AppConfig, sync: SyncServer? = nil, tab: SettingsTab = .general) {
+        self.timer = timer
         self.loginItem = loginItem
         self.config = config
         self.sync = sync
@@ -19,6 +19,7 @@ struct SettingsView: View {
     }
 
     private var metrics: SettingsWindowConfig { config.settingsWindow }
+    private var settings: Binding<PomodoroCore.Settings> { Binding(get: { timer.settings }, set: { timer.update($0) }) }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -95,9 +96,9 @@ struct SettingsView: View {
     @ViewBuilder
     private var content: some View {
         switch tab {
-        case .general: GeneralTab(store: store, loginItem: loginItem, metrics: metrics)
-        case .intervals: IntervalsTab(store: store, config: config)
-        case .sounds: SoundsTab(store: store, metrics: metrics)
+        case .general: GeneralTab(settings: settings, loginItem: loginItem, metrics: metrics)
+        case .intervals: IntervalsTab(settings: settings, config: config)
+        case .sounds: SoundsTab(settings: settings, names: timer.sound.names, metrics: metrics)
         case .devices:
             if let sync { DevicesTab(sync: sync, metrics: metrics) }
         }

@@ -7,7 +7,10 @@ import SwiftUI
 @MainActor
 enum Shared {
     static let config = AppConfig.load()
-    static let timer = TimerStore(config: config)
+    static let sound = SoundPlayer()
+    static let alerts = PhoneAlerts(sound: sound, ring: config.ring)
+    static let timer = PomodoroTimer(intervals: config.intervals, dial: config.dial.dial,
+                                     sound: sound, alerts: alerts, isHub: false)
     static let sync = SyncClient(timer: timer)
 }
 
@@ -44,12 +47,13 @@ struct PomodoroApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationStack(path: $path) {
-                TimerScreen(timer: Shared.timer, config: Shared.config) { path.append(.settings) }
+                TimerScreen(timer: Shared.timer, config: Shared.config,
+                            onStart: { Task { await Shared.alerts.askForNotifications() } }) { path.append(.settings) }
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationDestination(for: Route.self) { route in
                         switch route {
                         case .settings:
-                            SettingsScreen(timer: Shared.timer, sync: Shared.sync) { path.append(.pair) }
+                            SettingsScreen(timer: Shared.timer, alerts: Shared.alerts, sync: Shared.sync) { path.append(.pair) }
                         case .pair:
                             PairScreen { link in
                                 Shared.sync.pair(link)
@@ -64,7 +68,7 @@ struct PomodoroApp: App {
                 switch phase {
                 case .active:
                     Shared.timer.tick()
-                    Task { await Shared.timer.refreshPermissions() }
+                    Task { await Shared.alerts.refreshPermissions() }
                     Shared.sync.setActive(true)
                 case .background:
                     Shared.sync.setActive(false)

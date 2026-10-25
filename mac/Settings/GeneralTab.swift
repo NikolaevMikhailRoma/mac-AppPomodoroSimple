@@ -3,18 +3,19 @@ import PomodoroCore
 import PomodoroConfig
 
 struct GeneralTab: View {
-    @Bindable var store: SettingsStore
+    @Binding var settings: PomodoroCore.Settings
     let loginItem: LoginItem
     let metrics: SettingsWindowConfig
 
     var body: some View {
         VStack(spacing: 0) {
             FormRow(label: "Appearance", metrics: metrics) {
-                Picker("", selection: $store.settings.general.appearance) {
+                Picker("", selection: $settings.general.appearance) {
                     ForEach(Appearance.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
                 .labelsHidden()
                 .frame(width: metrics.controlWidth)
+                .onChange(of: settings.general.appearance) { _, new in Theme.applyAppearance(new) }
             }
             FormRow(label: "Launch at startup", metrics: metrics) {
                 Toggle("", isOn: Binding(
@@ -35,12 +36,12 @@ struct GeneralTab: View {
                 .frame(height: metrics.rowHeight)
             }
             FormRow(label: "Show timer in menu bar", metrics: metrics) {
-                Toggle("", isOn: $store.settings.general.showTimerInMenuBar)
+                Toggle("", isOn: $settings.general.showTimerInMenuBar)
                     .toggleStyle(.checkbox)
                     .labelsHidden()
             }
             FormRow(label: "Auto-start next interval", metrics: metrics) {
-                Toggle("", isOn: $store.settings.general.autoStartNextInterval)
+                Toggle("", isOn: $settings.general.autoStartNextInterval)
                     .toggleStyle(.checkbox)
                     .labelsHidden()
             }

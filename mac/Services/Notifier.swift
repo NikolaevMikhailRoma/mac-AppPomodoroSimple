@@ -2,11 +2,13 @@ import Foundation
 import UserNotifications
 import PomodoroCore
 
+/// A notification the moment an interval ends: the Mac app is always running, so nothing is scheduled ahead.
 @MainActor
-final class Notifier {
+final class Notifier: TimerAlerts {
+    let ringWhileClosed = false
     private let available = Bundle.main.bundleIdentifier != nil
 
-    func requestPermission() {
+    init() {
         guard available else { return }
         Task {
             _ = try? await UNUserNotificationCenter.current()
@@ -14,11 +16,11 @@ final class Notifier {
         }
     }
 
-    func post(finished: Phase, next: Phase, enabled: Bool) {
-        guard available, enabled else { return }
+    func finished(_ phase: Phase, next: Phase, settings: Settings) {
+        guard available, settings.sound.notificationsEnabled else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = finished == .work ? "Work interval finished" : "Break finished"
+        content.title = phase == .work ? "Work interval finished" : "Break finished"
         content.body = next == .work ? "Time to work." : "Time for a \(next.title.lowercased())."
 
         let request = UNNotificationRequest(
@@ -28,4 +30,6 @@ final class Notifier {
         )
         Task { try? await UNUserNotificationCenter.current().add(request) }
     }
+
+    func changed(_ engine: PomodoroEngine, settings: Settings) {}
 }

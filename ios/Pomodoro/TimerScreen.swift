@@ -5,8 +5,10 @@ import SwiftUI
 /// The Mac popover, laid out for a phone: header at the top, ring in the
 /// middle, footer at the bottom, every size the popover's scaled to the screen.
 struct TimerScreen: View {
-    let timer: TimerStore
+    let timer: PomodoroTimer
     let config: AppConfig
+    /// Before the timer starts: the first start is when a notification is first due.
+    let onStart: () -> Void
     let openSettings: () -> Void
 
     @State private var draft: String?
@@ -34,12 +36,6 @@ struct TimerScreen: View {
             .onTapGesture(perform: commitIfEditing)
         }
         .background(Color(hex: popover.background).ignoresSafeArea())
-        .task(id: timer.isRunning) {
-            while timer.isRunning, !Task.isCancelled {
-                timer.tick()
-                try? await Task.sleep(for: .milliseconds(250))
-            }
-        }
     }
 
     private func header(_ scale: Double) -> some View {
@@ -80,7 +76,7 @@ struct TimerScreen: View {
 
             TransportButton(isRunning: timer.isRunning, ring: ring, color: accent) {
                 commitIfEditing()
-                if !timer.isRunning { Task { await timer.askForNotifications() } }
+                if !timer.isRunning { onStart() }
                 timer.toggle()
             }
             .offset(y: ring.playOffset)

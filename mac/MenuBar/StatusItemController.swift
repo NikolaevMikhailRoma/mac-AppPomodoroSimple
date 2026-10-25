@@ -7,19 +7,16 @@ import PomodoroConfig
 final class StatusItemController: NSObject {
     private let item: NSStatusItem
     private let popover = NSPopover()
-    private let timer: TimerController
+    private let timer: PomodoroTimer
     private let config: AppConfig
-    private let store: SettingsStore
     private let openSettings: () -> Void
 
     init(
-        timer: TimerController,
-        store: SettingsStore,
+        timer: PomodoroTimer,
         config: AppConfig,
         openSettings: @escaping () -> Void
     ) {
         self.timer = timer
-        self.store = store
         self.config = config
         self.openSettings = openSettings
         self.item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -57,7 +54,7 @@ final class StatusItemController: NSObject {
         guard let button = item.button else { return }
 
         button.image = stateIcon
-        let showDigits = store.settings.general.showTimerInMenuBar
+        let showDigits = timer.settings.general.showTimerInMenuBar
         button.imagePosition = showDigits ? .imageTrailing : .imageOnly
 
         guard showDigits else {
