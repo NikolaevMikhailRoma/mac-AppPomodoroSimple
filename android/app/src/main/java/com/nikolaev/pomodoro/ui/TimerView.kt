@@ -57,7 +57,7 @@ private const val TICK_MS = 250L
 
 /** The Mac popover, laid out for a phone: header at the top, ring in the middle, footer at the bottom. */
 @Composable
-fun TimerScreen(timer: TimerRepository, onStart: () -> Unit, onOpenSettings: () -> Unit) {
+fun TimerView(timer: TimerRepository, onStart: () -> Unit, onOpenSettings: () -> Unit) {
     val state by timer.state.collectAsStateWithLifecycle()
     val running = state.runState == RunState.RUNNING
 
@@ -101,7 +101,7 @@ fun TimerScreen(timer: TimerRepository, onStart: () -> Unit, onOpenSettings: () 
                 // Below the middle by as much as the popover's gaps differ, as on the Mac.
                 val lower = units.dp(Design.popover["headerToRing"] - Design.popover["ringToFooter"])
                 Box(Modifier.weight(1f).fillMaxWidth().padding(top = lower), contentAlignment = Alignment.Center) {
-                    Ring(timer.dial.fraction(state.remaining), accent) {
+                    RingView(timer.dial.fraction(state.remaining), accent) {
                         commitIfEditing()
                         timer.setDurationFraction(it)
                     }

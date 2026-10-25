@@ -20,7 +20,7 @@ import androidx.compose.runtime.setValue
 import com.nikolaev.pomodoro.core.PairLink
 import com.nikolaev.pomodoro.ui.PairScreen
 import com.nikolaev.pomodoro.ui.SettingsScreen
-import com.nikolaev.pomodoro.ui.TimerScreen
+import com.nikolaev.pomodoro.ui.TimerView
 
 class MainActivity : ComponentActivity() {
     private val askNotifications =
@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
                         initialTab = settingsTab,
                     )
                 }
-                else -> TimerScreen(timer, onStart = ::askForNotificationsOnce, onOpenSettings = { screen = "settings" })
+                else -> TimerView(timer, onStart = ::askForNotificationsOnce, onOpenSettings = { screen = "settings" })
             }
         }
         handlePairingLink(intent)

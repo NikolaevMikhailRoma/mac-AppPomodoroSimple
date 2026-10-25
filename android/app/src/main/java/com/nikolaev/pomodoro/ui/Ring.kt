@@ -31,7 +31,7 @@ import kotlin.math.sin
  * still take a touch.
  */
 @Composable
-fun Ring(turnFraction: Double, color: Color, onDrag: (Double) -> Unit) {
+fun RingView(turnFraction: Double, color: Color, onDrag: (Double) -> Unit) {
     val units = LocalUnits.current
     val fraction by rememberUpdatedState(turnFraction)
     val dragTo by rememberUpdatedState(onDrag)
