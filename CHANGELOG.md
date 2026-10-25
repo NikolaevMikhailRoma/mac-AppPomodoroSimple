@@ -2,7 +2,7 @@
 
 All notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.3.1] — 2026-10-25
 
 ### Changed
 - The iPhone and Android settings look like the Mac's: the same tabs on the edge of the box, each phone's own switches and steppers, in the Mac's green. The Mac looks as before.
@@ -11,6 +11,7 @@ All notable changes, newest first. The format follows [Keep a Changelog](https:/
 - Smaller apps: the Mac app is 1.3 MB instead of 2.0, the iPhone app 1.2 MB instead of 3.4.
 - The Mac app takes about a third less memory: the settings window is made when opened and let go when closed.
 - A running timer wakes its app once a second, when the digits turn, instead of four times: on the Mac it takes a quarter of the processor time it did.
+- The Android app is signed with its own key instead of the debug one. Android does not install it over 0.2.0: uninstall Pomodoro first (its settings are reset), then install this one.
 
 ### Added
 - `./build.sh` builds all three apps, or the one named; `./install.sh mac`, `./install.sh android <name>`, `./install.sh ios <name>` builds one and puts it on that device.
@@ -50,6 +51,7 @@ The macOS app is unchanged apart from the version number.
 ### Added
 - First release: menu bar timer with a popover ring, work and break intervals, settings window.
 
+[0.3.1]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.1.1...v0.1.2
