@@ -87,6 +87,24 @@ public enum Palette {
     ]
 }
 
+/// A colour of the config, "#RRGGBB" or "#RRGGBBAA", as channels from 0 to 1:
+/// one parser for SwiftUI and AppKit.
+public struct RGBA: Equatable, Sendable {
+    public let red, green, blue, alpha: Double
+
+    public init?(hex: String) {
+        var text = hex.trimmingCharacters(in: .whitespaces)
+        if text.hasPrefix("#") { text.removeFirst() }
+        guard text.count == 6 || text.count == 8, let value = UInt64(text, radix: 16) else { return nil }
+        let hasAlpha = text.count == 8
+        let channel = { (shift: UInt64) in Double((value >> shift) & 0xFF) / 255 }
+        red = channel(hasAlpha ? 24 : 16)
+        green = channel(hasAlpha ? 16 : 8)
+        blue = channel(hasAlpha ? 8 : 0)
+        alpha = hasAlpha ? channel(0) : 1
+    }
+}
+
 /// An icon: system symbol name, size and weight. One type for every use —
 /// menu bar, gear, skip, close.
 public struct IconConfig: Codable, Equatable, Sendable {

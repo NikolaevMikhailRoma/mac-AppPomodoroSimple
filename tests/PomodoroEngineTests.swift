@@ -268,6 +268,13 @@ struct ConfigTests {
         #expect(c.ring.breakColor == "nosuchcolour")
     }
 
+    @Test("a colour reads with or without alpha; anything else is no colour")
+    func colours() {
+        #expect(RGBA(hex: "#FF8000") == RGBA(hex: "FF8000FF"))
+        #expect(RGBA(hex: "#7676803D")?.alpha == Double(0x3D) / 255)
+        #expect(RGBA(hex: "#FF80") == nil && RGBA(hex: "nosuchcolour") == nil)
+    }
+
     @Test("the shipped config.json decodes and its palette names resolve")
     func shippedFile() {
         let c = AppConfig.load()

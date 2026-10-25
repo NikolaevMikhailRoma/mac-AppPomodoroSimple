@@ -23,21 +23,11 @@ extension AppConfig {
 extension Color {
     /// "#RRGGBB" or "#RRGGBBAA"; anything else is white.
     public init(hex: String) {
-        var text = hex.trimmingCharacters(in: .whitespaces)
-        if text.hasPrefix("#") { text.removeFirst() }
-        guard text.count == 6 || text.count == 8, let value = UInt64(text, radix: 16) else {
+        guard let c = RGBA(hex: hex) else {
             self = .white
             return
         }
-        let alpha = text.count == 8
-        let channel = { (shift: UInt64) in Double((value >> shift) & 0xFF) / 255 }
-        self.init(
-            .sRGB,
-            red: channel(alpha ? 24 : 16),
-            green: channel(alpha ? 16 : 8),
-            blue: channel(alpha ? 8 : 0),
-            opacity: alpha ? channel(0) : 1
-        )
+        self.init(.sRGB, red: c.red, green: c.green, blue: c.blue, opacity: c.alpha)
     }
 }
 

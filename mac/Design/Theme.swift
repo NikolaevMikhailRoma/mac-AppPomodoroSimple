@@ -5,17 +5,8 @@ import PomodoroConfig
 
 enum Theme {
     static func color(_ hex: String, fallback: NSColor = .labelColor) -> NSColor {
-        var text = hex.trimmingCharacters(in: .whitespaces)
-        if text.hasPrefix("#") { text.removeFirst() }
-        guard text.count == 6 || text.count == 8,
-              let value = UInt64(text, radix: 16) else { return fallback }
-
-        let hasAlpha = text.count == 8
-        let r = Double((value >> (hasAlpha ? 24 : 16)) & 0xFF) / 255
-        let g = Double((value >> (hasAlpha ? 16 : 8)) & 0xFF) / 255
-        let b = Double((value >> (hasAlpha ? 8 : 0)) & 0xFF) / 255
-        let a = hasAlpha ? Double(value & 0xFF) / 255 : 1
-        return NSColor(srgbRed: r, green: g, blue: b, alpha: a)
+        guard let c = RGBA(hex: hex) else { return fallback }
+        return NSColor(srgbRed: c.red, green: c.green, blue: c.blue, alpha: c.alpha)
     }
 
     /// A weight name from the config as an NSFont.Weight. One table for fonts
