@@ -3,27 +3,44 @@
 ![macOS 15+](https://img.shields.io/badge/macOS-15%2B-black?logo=apple)
 ![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
 ![Android 8+](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
+![iOS 17+](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
 ![Kotlin 2.4](https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white)
 [![License](https://img.shields.io/github/license/NikolaevMikhailRoma/mac-AppPomodoroSimple)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/NikolaevMikhailRoma/mac-AppPomodoroSimple)](https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/NikolaevMikhailRoma/mac-AppPomodoroSimple/total)](https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/releases)
 
-# (experimental)
-- added android app
-- linked mac and android app, by local network and keychain
-- added iPhone app (iOS 17+), tested on iPhone 12 mini
+A minimal pomodoro timer for the Mac menu bar, Android and iPhone. Each app
+works on its own; paired, they share one timer.
+
+The timer is the same everywhere: red while working, green on a break, grey
+when stopped. Drag the ring to set the interval (up to 59:59) or tap the digits
+to type it. The ▷| button finishes work early and counts it — handy when you
+forgot to start the timer — or skips a break. Settings: interval lengths, the
+sound and notification at the end of an interval.
+
+# Sync (experimental)
+
+The Mac and the phones keep one timer: start, pause or drag the ring on one,
+and the others follow. Interval lengths are shared too; sounds and
+notifications stay each device's own.
+
+- Pair once: on the Mac, **Settings → Devices → Pair a Phone…** shows a QR code;
+  on the phone, **Settings → Devices → Pair with Mac** and point the camera at it.
+- The devices talk directly over your Wi-Fi: no servers, no accounts. Everything
+  is encrypted with a key made at pairing, kept in the Keychain (Mac, iPhone) or
+  under an Android Keystore key.
+- A phone syncs while its app is on screen, and for a moment when you press
+  pause in the notification shade (Android) or on the Lock Screen (iPhone).
+  Android also checks with the Mac before ringing at the end of an interval;
+  an iPhone with the app closed does not, so a pause on the Mac does not stop
+  its ring.
 
 # macOS
 ![Menu bar and timer](assets/popover.png)
 
-A minimal native macOS menu bar pomodoro timer: red while working, green on a
-break, grey when stopped. No Dock icon, no main window. Drag the ring to set the
-interval (up to 59:59) or click the digits to type it. The ▷| button finishes
-work early and counts it — handy when you forgot to start the timer — or skips a
-break. Right-click the menu bar icon for the same action, Settings and Quit.
-
-Settings: intervals, the sound and notification at the end of an interval,
-launch at startup, and a light/dark/auto appearance.
+Lives in the menu bar: no Dock icon, no main window. Right-click the menu bar
+icon for ▷|, Settings and Quit. Also launch at startup and a light/dark/auto
+appearance.
 
 <p>
   <img src="assets/settings-general.png" width="270" alt="General">
@@ -77,13 +94,27 @@ To build it yourself: JDK 21 and the Android SDK, then `cd android && ./gradlew 
 
 # iPhone (experimental)
 
-The same timer on iOS 17 and newer, with a Lock Screen timer and sync with the Mac. Tested on an iPhone 12 mini with iOS 26.2.
-Build and install from a Mac with Xcode: `brew install xcodegen`, then `ios/device.sh`.
+The same timer on iOS 17 and newer, with the running timer on the Lock Screen
+and a pause button there. Tested on an iPhone 12 mini with iOS 26.2.
+
+Not in the App Store: build and install it from a Mac.
+
+1. Xcode, and `brew install xcodegen`.
+2. Your Apple Account in Xcode → Settings → Accounts (a free one is enough), and
+   an Apple Development certificate: **Manage Certificates… → + → Apple Development**.
+3. On the iPhone, turn on Developer Mode and connect it to the Mac once.
+4. `ios/device.sh` builds, installs and starts the app. The first time, the
+   iPhone asks to trust the developer: Settings → General → VPN & Device
+   Management.
+
+With a free Apple Account the app runs for 7 days; run `ios/device.sh` again
+to renew it. Settings and pairing stay.
 
 # Version history
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
+- **0.3.0** — experimental iPhone app, sync between the Mac and the phones.
 - **0.2.0** — experimental Android app; the Mac app is unchanged.
 - **0.1.2** — fixed a crash on launch on another Mac.
 - **0.1.1** — ▷| counts a skipped work interval, 59:59 limit with hints, a second copy no longer starts.

@@ -2,12 +2,11 @@
 
 All notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — experimental
-
-Not released yet; goes out together with the iPhone app.
+## [0.3.0] — 2026-10-24
 
 ### Added
-- Mac and Android sync over the home Wi-Fi: one timer and the same interval lengths on both, paired once with a QR code (Settings → Devices).
+- iPhone version (experimental), for iOS 17 and newer: the same timer and settings, with the running timer on the Lock Screen and a pause button there. Tested on an iPhone 12 mini; installed from source with Xcode, not from the App Store.
+- Sync between the Mac and the phones (experimental), over the home Wi-Fi: one timer and the same interval lengths on all of them, paired once with a QR code (Settings → Devices). No servers or accounts; everything is encrypted.
 
 ## [0.2.0] — 2026-10-23
 
@@ -38,6 +37,7 @@ The macOS app is unchanged apart from the version number.
 ### Added
 - First release: menu bar timer with a popover ring, work and break intervals, settings window.
 
+[0.3.0]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple/compare/v0.1.0...v0.1.1
