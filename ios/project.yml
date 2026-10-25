@@ -10,6 +10,10 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     TARGETED_DEVICE_FAMILY: "1"
+  configs:
+    # Strips the symbols, as an archive does: half of each binary.
+    Release:
+      DEPLOYMENT_POSTPROCESSING: YES
 targets:
   # Not "Pomodoro": the package has a Mac product of that name, and the test runner mixes them up.
   PomodoroPhone:
@@ -50,10 +54,6 @@ targets:
     type: app-extension
     platform: iOS
     sources: [LiveActivity, Shared]
-    dependencies:
-      # Color(hex:) only.
-      - package: Pomodoro
-        product: PomodoroUI
     info:
       path: LiveActivity/Info.plist
       properties:

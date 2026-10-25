@@ -8,6 +8,7 @@ All notable changes, newest first. The format follows [Keep a Changelog](https:/
 - The iPhone and Android settings look like the Mac's: the same tabs on the edge of the box, each phone's own switches and steppers, in the Mac's green. The Mac looks as before.
 - Android uses the Inter font, the closest free one to the Mac's.
 - Choosing a sound or letting go of the volume slider plays the sound on the Mac too, as on the phones.
+- Smaller apps: the Mac app is 1.3 MB instead of 2.0, the iPhone app 1.2 MB instead of 3.4.
 
 ### Added
 - `./build.sh` builds all three apps, or the one named; `./install.sh mac`, `./install.sh android <name>`, `./install.sh ios <name>` builds one and puts it on that device.

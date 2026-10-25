@@ -1,6 +1,5 @@
 import ActivityKit
 import AppIntents
-import PomodoroUI
 import SwiftUI
 
 // Compiled into both the app and the Live Activity extension.

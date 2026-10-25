@@ -1,5 +1,4 @@
 import ActivityKit
-import PomodoroUI
 import SwiftUI
 import WidgetKit
 
@@ -45,6 +44,15 @@ struct TimerLiveActivity: Widget {
 private enum Style {
     static let background = "#252525"
     static let secondary = "#C8C8C8"
+}
+
+private extension Color {
+    /// "#EC958C". Not PomodoroUI's: linking that for one colour made the extension six times bigger.
+    init(hex: String) {
+        let value = UInt32(hex.dropFirst(), radix: 16) ?? 0xFFFFFF
+        self.init(red: Double(value >> 16 & 0xFF) / 255, green: Double(value >> 8 & 0xFF) / 255,
+                  blue: Double(value & 0xFF) / 255)
+    }
 }
 
 private struct LockScreenView: View {

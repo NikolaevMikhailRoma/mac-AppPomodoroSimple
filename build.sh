@@ -16,6 +16,8 @@ build_mac() {
     rm -rf Pomodoro.app
     mkdir -p Pomodoro.app/Contents/MacOS Pomodoro.app/Contents/Resources
     cp .build/release/Pomodoro Pomodoro.app/Contents/MacOS/Pomodoro
+    # The symbols are almost half the binary, and nothing reads them on a user's Mac.
+    strip -x Pomodoro.app/Contents/MacOS/Pomodoro
     cp mac/Info.plist Pomodoro.app/Contents/Info.plist
     # config.json ships inside the PomodoroConfig resource bundle; AppConfig.load finds it
     # in Contents/Resources at runtime.
