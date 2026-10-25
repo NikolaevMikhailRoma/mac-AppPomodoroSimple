@@ -5,13 +5,17 @@ import PomodoroConfig
 import PomodoroUI
 
 @MainActor
-final class SettingsWindowController {
+final class SettingsWindowController: NSObject, NSWindowDelegate {
     let window: NSWindow
     private let loginItem: LoginItem
-    private var closeObserver: NSObjectProtocol?
+    private weak var sync: SyncServer?
+    private let onClose: () -> Void
 
-    init(timer: PomodoroTimer, loginItem: LoginItem, config: AppConfig, sync: SyncServer? = nil, tab: SettingsTab = .general) {
+    init(timer: PomodoroTimer, loginItem: LoginItem, config: AppConfig, sync: SyncServer? = nil,
+         tab: SettingsTab = .general, onClose: @escaping () -> Void = {}) {
         self.loginItem = loginItem
+        self.sync = sync
+        self.onClose = onClose
         let metrics = config.settingsWindow
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: metrics.width, height: metrics.height),
@@ -23,12 +27,8 @@ final class SettingsWindowController {
         window.isReleasedWhenClosed = false
         window.backgroundColor = Theme.color(metrics.background, fallback: .windowBackgroundColor)
         window.center()
-        // A pairing QR must not stay valid behind a closed window.
-        closeObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.willCloseNotification, object: window, queue: .main
-        ) { [weak sync] _ in
-            MainActor.assumeIsolated { sync?.endPairing() }
-        }
+        super.init()
+        window.delegate = self
         let settings = Binding(get: { timer.settings }, set: { timer.update($0) })
         window.contentView = NSHostingView(
             rootView: SettingsView(settings: settings, sound: timer.sound, config: config, tab: tab) {
@@ -46,5 +46,11 @@ final class SettingsWindowController {
         loginItem.refresh()
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        // A pairing QR must not stay valid behind a closed window.
+        sync?.endPairing()
+        onClose()
     }
 }
