@@ -66,7 +66,7 @@ Requirements:
 ```
 git clone https://github.com/NikolaevMikhailRoma/mac-AppPomodoroSimple.git
 cd mac-AppPomodoroSimple
-./build.sh
+./build.sh mac
 open Pomodoro.app
 ```
 
@@ -97,17 +97,22 @@ To build it yourself: JDK 21 and the Android SDK, then `cd android && ./gradlew 
 The same timer on iOS 17 and newer, with the running timer on the Lock Screen
 and a pause button there. Tested on an iPhone 12 mini with iOS 26.2.
 
+<p>
+  <img src="assets/iphone-timer.png" width="270" alt="iPhone timer">
+  <img src="assets/iphone-settings.png" width="270" alt="iPhone settings">
+</p>
+
 Not in the App Store: build and install it from a Mac.
 
 1. Xcode, and `brew install xcodegen`.
 2. Your Apple Account in Xcode → Settings → Accounts (a free one is enough), and
    an Apple Development certificate: **Manage Certificates… → + → Apple Development**.
 3. On the iPhone, turn on Developer Mode and connect it to the Mac once.
-4. `ios/device.sh` builds, installs and starts the app. The first time, the
+4. `./install.sh ios <name>` builds, installs and starts the app. The first time, the
    iPhone asks to trust the developer: Settings → General → VPN & Device
    Management.
 
-With a free Apple Account the app runs for 7 days; run `ios/device.sh` again
+With a free Apple Account the app runs for 7 days; run `./install.sh ios <name>` again
 to renew it. Settings and pairing stay.
 
 # Version history

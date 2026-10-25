@@ -98,7 +98,8 @@ public struct TimerView: View {
     private func digits(_ scale: Double) -> some View {
         Group {
             if let draft {
-                // Starts empty, the time as a placeholder: typing replaces it whole.
+                // On a phone it starts empty, the time as a placeholder: typing
+                // replaces it whole. On the Mac it starts with the time, to edit.
                 TextField("", text: Binding(get: { draft }, set: { self.draft = $0 }),
                           prompt: Text(timer.timeText).foregroundStyle(accent.opacity(0.35)))
                     .textFieldStyle(.plain)
@@ -112,7 +113,7 @@ public struct TimerView: View {
                     .task { editing = true }
             } else {
                 Text(timer.timeText)
-                    .onTapGesture { draft = "" }
+                    .onTapGesture { draft = AppConfig.onPhone ? "" : timer.timeText }
             }
         }
         .font(config.fonts.digits.font(scale: scale))
