@@ -10,6 +10,7 @@ All notable changes, newest first. The format follows [Keep a Changelog](https:/
 - Choosing a sound or letting go of the volume slider plays the sound on the Mac too, as on the phones.
 - Smaller apps: the Mac app is 1.3 MB instead of 2.0, the iPhone app 1.2 MB instead of 3.4.
 - The Mac app takes about a third less memory: the settings window is made when opened and let go when closed.
+- A running timer wakes its app once a second, when the digits turn, instead of four times: on the Mac it takes a quarter of the processor time it did.
 
 ### Added
 - `./build.sh` builds all three apps, or the one named; `./install.sh mac`, `./install.sh android <name>`, `./install.sh ios <name>` builds one and puts it on that device.

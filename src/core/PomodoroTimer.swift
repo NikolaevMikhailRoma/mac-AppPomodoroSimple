@@ -28,7 +28,8 @@ public protocol TimerAlerts: AnyObject {
 @MainActor
 @Observable
 public final class PomodoroTimer {
-    private static let tickInterval: TimeInterval = 0.25
+    /// A tick comes this long after the shown second turned: a timer fires late at times, never early.
+    private static let tickMargin: TimeInterval = 0.01
     /// An interval that ran out longer ago than this rang while the app was
     /// closed (`ringWhileClosed`); the app does not ring it again.
     private static let lateAfter: TimeInterval = 2
@@ -233,17 +234,18 @@ public final class PomodoroTimer {
         onChange?()
     }
 
+    /// While running, one tick each time the shown time turns, and none in
+    /// between. The time is rounded up, so it turns when whole seconds are left.
     private func syncTicker() {
-        if isRunning, ticker == nil {
-            // .common: the Mac's menu bar keeps counting while a menu is open.
-            let ticker = Timer(timeInterval: Self.tickInterval, repeats: true) { [weak self] _ in
-                MainActor.assumeIsolated { self?.tick() }
-            }
-            RunLoop.main.add(ticker, forMode: .common)
-            self.ticker = ticker
-        } else if !isRunning {
-            ticker?.invalidate()
-            ticker = nil
+        ticker?.invalidate()
+        ticker = nil
+        guard isRunning, let endsAt = state.endsAt else { return }
+        let left = endsAt.timeIntervalSinceNow
+        let ticker = Timer(timeInterval: left - left.rounded(.down) + Self.tickMargin, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.tick() }
         }
+        // .common: the Mac's menu bar keeps counting while a menu is open.
+        RunLoop.main.add(ticker, forMode: .common)
+        self.ticker = ticker
     }
 }

@@ -123,6 +123,19 @@ struct PomodoroTimerTests {
         #expect(s.timer.settings.intervalsChangedAt == sent[0])
     }
 
+    @Test("while running it ticks once a second, just after the shown time turns")
+    func ticksOnTheTurn() {
+        let s = Setup(hub: true)
+        let now = Date()
+        s.timer.receive(EngineState(phase: .work, runState: .running, phaseDuration: 60, remaining: 3.5,
+                                    endsAt: now.addingTimeInterval(3.5), completedToday: 0, sinceLongBreak: 0,
+                                    day: EngineState.day(of: now), changedAt: now))
+        var shown: [String] = []
+        s.timer.onChange = { shown.append(s.timer.timeText) }
+        RunLoop.main.run(until: now.addingTimeInterval(2.2))
+        #expect(shown == ["00:03", "00:02"])
+    }
+
     @Test("a saved sound this platform lacks gives way to its own")
     func soundFallback() {
         let name = UUID().uuidString

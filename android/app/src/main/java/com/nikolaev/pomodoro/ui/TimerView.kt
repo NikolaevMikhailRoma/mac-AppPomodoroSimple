@@ -53,7 +53,12 @@ import com.nikolaev.pomodoro.core.RunState
 import com.nikolaev.pomodoro.core.TimeFormat
 import kotlinx.coroutines.delay
 
-private const val TICK_MS = 250L
+/** A tick comes this long after the shown second turned: a delay can run late, never early. */
+private const val TICK_MARGIN_MS = 10L
+
+/** Until the shown time turns next: it is rounded up, so it turns when whole seconds are left. */
+private fun untilTurn(endsAt: Double): Long =
+    Math.floorMod((endsAt * 1000).toLong() - System.currentTimeMillis(), 1000L) + TICK_MARGIN_MS
 
 /** The Mac popover, laid out for a phone: header at the top, ring in the middle, footer at the bottom. */
 @Composable
@@ -62,12 +67,14 @@ fun TimerView(timer: TimerRepository, onStart: () -> Unit, onOpenSettings: () ->
     val running = state.runState == RunState.RUNNING
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(running) {
-        if (!running) return@LaunchedEffect
+    // While running, one tick each time the shown time turns, and none in between;
+    // a new end (a drag, a state from the Mac) starts the count again.
+    LaunchedEffect(state.endsAt) {
+        val endsAt = state.endsAt ?: return@LaunchedEffect
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) {
                 timer.tick()
-                delay(TICK_MS)
+                delay(untilTurn(endsAt))
             }
         }
     }
