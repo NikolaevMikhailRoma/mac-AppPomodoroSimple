@@ -10,6 +10,8 @@ VERSION="$(plutil -extract version raw app.json)"
 # Outside Dropbox: it marks app bundles inside it, and codesign refuses them.
 IOS_BUILD="$HOME/Library/Developer/Xcode/DerivedData/PomodoroPhone"
 IOS_APP="$IOS_BUILD/Build/Products/Release-iphoneos/Pomodoro.app"
+# The APK's key, outside the project; its password is in the Keychain.
+APK_KEY="$HOME/Keys/pomodoro-release.jks"
 
 build_mac() {
     swift build -c release
@@ -31,6 +33,15 @@ build_mac() {
 build_android() {
     # The JDK and the SDK: ~/AndroidDev if it is there, otherwise JAVA_HOME and ANDROID_HOME.
     if [ -f ~/AndroidDev/env.sh ]; then . ~/AndroidDev/env.sh; fi
+    # Without the key Gradle signs with the debug one, and that APK cannot update
+    # an app signed with this key.
+    if [ -f "$APK_KEY" ]; then
+        export POMODORO_KEYSTORE="$APK_KEY"
+        POMODORO_KEY_PASSWORD="$(security find-generic-password -s com.nikolaev.pomodoro.apk-signing -a release -w)"
+        export POMODORO_KEY_PASSWORD
+    else
+        echo "No $APK_KEY: signing with the debug key" >&2
+    fi
     android/gradlew -p android assembleRelease --console=plain -q
     cp android/app/build/outputs/apk/release/app-release.apk Pomodoro.apk
     echo "Built Pomodoro.apk"

@@ -28,14 +28,25 @@ android {
     // Library strings (accessibility labels and the like) only in the languages the phone uses.
     androidResources { localeFilters += listOf("en", "ru") }
 
+    // The release key: build.sh passes its file, and its password from the Mac's Keychain.
+    // Without them, as when someone else builds from source, a release build takes the debug key.
+    val releaseKey = System.getenv("POMODORO_KEYSTORE")
+    signingConfigs {
+        if (releaseKey != null) create("release") {
+            storeFile = file(releaseKey)
+            storePassword = System.getenv("POMODORO_KEY_PASSWORD")
+            keyAlias = "pomodoro"
+            keyPassword = System.getenv("POMODORO_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
             // R8 drops the unused parts of Compose, Material and Kotlin: most of the APK.
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // The same key as debug builds, so either installs over the other without losing data.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 
