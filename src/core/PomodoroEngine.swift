@@ -56,15 +56,6 @@ public struct PomodoroEngine: Equatable, Sendable {
     public var remaining: TimeInterval { state.remaining }
     public var completedToday: Int { state.completedToday }
 
-    public var progress: Double {
-        guard phaseDuration > 0 else { return 0 }
-        return min(max(1 - remaining / phaseDuration, 0), 1)
-    }
-
-    public var isWorking: Bool {
-        phase == .work && runState == .running
-    }
-
     public mutating func start(now: Date = Date()) {
         guard runState != .running else { return }
         if remaining <= 0 { state.remaining = phaseDuration }

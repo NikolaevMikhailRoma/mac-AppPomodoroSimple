@@ -6,6 +6,8 @@
       "settings": { "workMinutes": 25, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
       "autoStart": false,
       "steps": [
+        { "at": 0, "do": "update", "events": [],
+          "expect": { "phase": "work", "runState": "idle", "phaseDuration": 1500, "remaining": 1500, "endsAt": null, "completedToday": 0 } },
         { "at": 0, "do": "start", "events": [], "expect": { "runState": "running", "endsAt": 1500, "changedAt": 0 } },
         { "at": 600, "do": "update", "events": [], "expect": { "remaining": 900, "changedAt": 0 } },
         { "at": 1500, "do": "update", "events": ["finished work", "started shortBreak"],
@@ -77,6 +79,34 @@
         { "at": 20, "do": "start", "expect": { "endsAt": 2420 } },
         { "at": 30, "do": "applySettings", "settings": { "workMinutes": 30, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
           "expect": { "phaseDuration": 2400, "endsAt": 2420, "changedAt": 20 } }
+      ]
+    },
+    {
+      "name": "a duration set while stopped takes over at once, and stop drops it for the configured one",
+      "settings": { "workMinutes": 25, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 4 },
+      "autoStart": false,
+      "steps": [
+        { "at": 0, "do": "setDuration", "seconds": 2400, "expect": { "runState": "idle", "phaseDuration": 2400, "remaining": 2400, "endsAt": null } },
+        { "at": 0, "do": "start", "expect": { "runState": "running", "endsAt": 2400 } },
+        { "at": 600, "do": "stop", "expect": { "runState": "idle", "phaseDuration": 1500, "remaining": 1500, "endsAt": null } }
+      ]
+    },
+    {
+      "name": "the long break comes after every longBreakAfter work intervals, then the count starts again",
+      "settings": { "workMinutes": 25, "shortBreakMinutes": 5, "longBreakMinutes": 15, "longBreakAfter": 2 },
+      "autoStart": true,
+      "steps": [
+        { "at": 0, "do": "start", "expect": { "runState": "running" } },
+        { "at": 1500, "do": "update", "events": ["finished work", "started shortBreak"],
+          "expect": { "phase": "shortBreak", "completedToday": 1, "sinceLongBreak": 1 } },
+        { "at": 1800, "do": "update", "events": ["finished shortBreak", "started work"],
+          "expect": { "phase": "work", "remaining": 1500, "completedToday": 1 } },
+        { "at": 3300, "do": "update", "events": ["finished work", "started longBreak"],
+          "expect": { "phase": "longBreak", "phaseDuration": 900, "completedToday": 2, "sinceLongBreak": 0 } },
+        { "at": 4200, "do": "update", "events": ["finished longBreak", "started work"],
+          "expect": { "phase": "work", "remaining": 1500 } },
+        { "at": 5700, "do": "update", "events": ["finished work", "started shortBreak"],
+          "expect": { "phase": "shortBreak", "completedToday": 3, "sinceLongBreak": 1 } }
       ]
     }
   ]

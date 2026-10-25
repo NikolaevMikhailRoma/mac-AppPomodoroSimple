@@ -5,8 +5,6 @@ public enum Phase: String, Codable, CaseIterable, Sendable {
     case shortBreak
     case longBreak
 
-    public var isBreak: Bool { self != .work }
-
     public var title: String {
         switch self {
         case .work: return "Work"
