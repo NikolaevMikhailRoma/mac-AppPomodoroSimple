@@ -11,17 +11,17 @@ swift build -c release
 rm -rf "$BUNDLE"
 mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources"
 cp ".build/release/$APP_NAME" "$BUNDLE/Contents/MacOS/$APP_NAME"
-cp Info.plist "$BUNDLE/Contents/Info.plist"
+cp mac/Info.plist "$BUNDLE/Contents/Info.plist"
 
 # config.json ships inside the PomodoroConfig resource bundle; AppConfig.load finds it
 # in Contents/Resources at runtime.
 cp -R ".build/release/${APP_NAME}_PomodoroConfig.bundle" "$BUNDLE/Contents/Resources/"
 
-if [ -f Resources/AppIcon.icns ]; then
-    cp Resources/AppIcon.icns "$BUNDLE/Contents/Resources/AppIcon.icns"
+if [ -f mac/Resources/AppIcon.icns ]; then
+    cp mac/Resources/AppIcon.icns "$BUNDLE/Contents/Resources/AppIcon.icns"
 fi
 
-swift Scripts/apply-config.swift app.json "$BUNDLE/Contents/Info.plist"
+swift scripts/apply-config.swift app.json "$BUNDLE/Contents/Info.plist"
 codesign --force --deep --sign - "$BUNDLE"
 
 echo "Built $BUNDLE — run with: open $BUNDLE"

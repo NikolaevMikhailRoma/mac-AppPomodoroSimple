@@ -1,35 +1,40 @@
 // swift-tools-version: 6.1
 import PackageDescription
 
+// src/ is what the Mac and the iPhone share; mac/ is the Mac's own. The
+// iPhone app (ios/) and Android (android/) build on src/ from their own folders.
 let package = Package(
     name: "Pomodoro",
     platforms: [.macOS(.v15), .iOS(.v17)],
     products: [
         .executable(name: "Pomodoro", targets: ["Pomodoro"]),
-        // The iPhone app (ios/) builds on the same logic.
         .library(name: "PomodoroCore", targets: ["PomodoroCore"]),
         .library(name: "PomodoroConfig", targets: ["PomodoroConfig"]),
     ],
     targets: [
         // Логика. Ни AppKit, ни SwiftUI, ни одного цвета — это импортируют тесты.
-        .target(name: "PomodoroCore"),
+        .target(name: "PomodoroCore", path: "src/core"),
 
-        // Форма config.json и его загрузка. Сам файл лежит здесь же, ресурсом.
+        // Форма config.json и его загрузка. Сам файл лежит здесь же, ресурсом; Android читает его же.
         .target(
             name: "PomodoroConfig",
             dependencies: ["PomodoroCore"],
-            resources: [.copy("Resources/config.json")]
+            path: "src/config",
+            resources: [.copy("config.json")]
         ),
 
-        // Интерфейс. Всё видимое живёт здесь, разложено по поверхностям.
+        // Мак: строка меню, окна, системные службы.
         .executableTarget(
             name: "Pomodoro",
-            dependencies: ["PomodoroCore", "PomodoroConfig"]
+            dependencies: ["PomodoroCore", "PomodoroConfig"],
+            path: "mac",
+            exclude: ["Info.plist", "Resources"]
         ),
 
         .testTarget(
             name: "PomodoroTests",
-            dependencies: ["PomodoroCore", "PomodoroConfig"]
+            dependencies: ["PomodoroCore", "PomodoroConfig"],
+            path: "tests"
         ),
     ]
 )

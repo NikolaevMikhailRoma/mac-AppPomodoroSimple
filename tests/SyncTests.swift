@@ -8,7 +8,7 @@ private let t0 = Date(timeIntervalSince1970: 1_000_000)
 /// docs/sync-vectors.json: the same file the Android tests read.
 nonisolated(unsafe) private let vectors: [String: Any] = {
     let url = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("docs/sync-vectors.json")
     return try! JSONSerialization.jsonObject(with: Data(contentsOf: url)) as! [String: Any]
 }()

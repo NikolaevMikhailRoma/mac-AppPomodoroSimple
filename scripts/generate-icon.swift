@@ -1,10 +1,10 @@
 // Renders the app icon: the app's own ring on a dark rounded square.
 //
 // Run once, then convert and commit the result:
-//   swift Scripts/generate-icon.swift Resources/AppIcon.iconset
-//   iconutil -c icns Resources/AppIcon.iconset -o Resources/AppIcon.icns
+//   swift scripts/generate-icon.swift mac/Resources/AppIcon.iconset
+//   iconutil -c icns mac/Resources/AppIcon.iconset -o mac/Resources/AppIcon.icns
 // The iPhone's, one opaque 1024-pixel square:
-//   swift Scripts/generate-icon.swift --ios ios/Pomodoro/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+//   swift scripts/generate-icon.swift --ios ios/Pomodoro/Assets.xcassets/AppIcon.appiconset/AppIcon.png
 //
 // Not part of build.sh — the .icns is committed, not rebuilt.
 

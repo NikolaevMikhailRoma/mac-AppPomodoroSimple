@@ -6,7 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-// Ported from pomidoro_app/Tests/PomodoroTests/PomodoroEngineTests.swift: the
+// Ported from pomidoro_app/tests/PomodoroEngineTests.swift: the
 // two apps must behave the same, so the same cases guard both.
 
 private const val T0 = 1_000_000.0

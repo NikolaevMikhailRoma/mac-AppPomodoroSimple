@@ -72,7 +72,7 @@ open Pomodoro.app
 
 Run the unit tests with `swift test` (pure logic lives in the `PomodoroCore` and
 `PomodoroConfig` targets). Every colour, size and icon is in
-[`config.json`](Sources/PomodoroConfig/Resources/config.json), not in the code.
+[`config.json`](src/config/config.json), not in the code.
 
 # Android (experimental)
 
