@@ -1,6 +1,8 @@
 import CryptoKit
 import Foundation
 import Network
+import PomodoroCore
+import PomodoroSync
 import Security
 
 /// The Mac this phone is paired with. The device key is in the Keychain,
@@ -9,7 +11,6 @@ import Security
 /// Everything else here is not secret and lives in UserDefaults.
 @MainActor
 final class PairedMac {
-    private static let service = "com.nikolaev.pomodoro.sync"
     private static let account = "deviceKey"
 
     private let defaults = UserDefaults.standard
@@ -21,7 +22,7 @@ final class PairedMac {
         if let id = defaults.string(forKey: "PhoneId") {
             phoneId = id
         } else {
-            phoneId = SymmetricKey(size: .bits128).withUnsafeBytes { Data($0) }.base64URL
+            phoneId = SyncCrypto.random(16).base64URL
             defaults.set(phoneId, forKey: "PhoneId")
         }
     }
@@ -60,38 +61,21 @@ final class PairedMac {
 
     /// Nil when not paired, or when the Keychain lost the key.
     func deviceKey() -> SymmetricKey? {
-        var query = Self.item
-        query[kSecReturnData as String] = true
-        var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess, let data = result as? Data else {
-            return nil
-        }
-        return SymmetricKey(data: data)
+        DeviceKeychain.read(Self.account)
     }
 
     /// False when the Keychain refused: then nothing is stored.
     func save(macId: String, key: SymmetricKey) -> Bool {
-        SecItemDelete(Self.item as CFDictionary)
-        var item = Self.item
-        item[kSecValueData as String] = key.withUnsafeBytes { Data($0) }
-        item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        guard SecItemAdd(item as CFDictionary, nil) == errSecSuccess else { return false }
+        let readable = [kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly]
+        guard DeviceKeychain.save(key, for: Self.account, attributes: readable) else { return false }
         defaults.set(macId, forKey: "MacId")
         return true
     }
 
     func forget() {
-        SecItemDelete(Self.item as CFDictionary)
+        DeviceKeychain.delete(Self.account)
         for key in ["MacId", "MacName", "MacKind", "MacHost", "MacPort"] {
             defaults.removeObject(forKey: key)
         }
-    }
-
-    private static var item: [String: Any] {
-        [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-        ]
     }
 }

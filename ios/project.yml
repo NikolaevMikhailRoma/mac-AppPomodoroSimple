@@ -27,6 +27,8 @@ targets:
         product: PomodoroConfig
       - package: Pomodoro
         product: PomodoroUI
+      - package: Pomodoro
+        product: PomodoroSync
       - target: LiveActivity
     info:
       path: Pomodoro/Info.plist

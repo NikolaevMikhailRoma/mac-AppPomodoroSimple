@@ -3,7 +3,28 @@ import Foundation
 import Network
 import Observation
 import PomodoroCore
+import PomodoroSync
 import UIKit
+
+/// The Mac said no before the session started. Unauthenticated, so it is
+/// shown, never acted on: the pairing stays.
+struct Refused: Error {
+    let message: String
+
+    init(_ message: String) {
+        self.message = message
+    }
+
+    init(reason: String) {
+        switch reason {
+        case "unknown-device": message = "The Mac no longer knows this iPhone. Forget it here and pair again."
+        case "pairing-expired": message = "The code on the Mac has expired. Show a new one and scan again."
+        case "keychain": message = "The Mac could not open this iPhone's key. Allow Pomodoro when the Mac asks for the Keychain password, then reopen the app."
+        case "version": message = "Update Pomodoro on both devices."
+        default: message = "The Mac refused: \(reason)"
+        }
+    }
+}
 
 /// The phone's side of docs/SYNC.md, as on Android: finds the paired Mac on
 /// the Wi-Fi, keeps one encrypted connection to it while the app is on
@@ -32,7 +53,7 @@ final class SyncClient {
     @ObservationIgnored private let timer: PomodoroTimer
     @ObservationIgnored private var worker: Task<Void, Never>?
     /// The worker's connection, open or being opened.
-    @ObservationIgnored private var link: Link?
+    @ObservationIgnored private var link: SyncConnection?
     @ObservationIgnored private var discovered: NWEndpoint?
     /// The newest state not sent yet.
     @ObservationIgnored private var pendingState: EngineState?
@@ -56,7 +77,7 @@ final class SyncClient {
         return "\(name) (\(DeviceKind.title(store.macKind ?? DeviceKind.mac)))"
     }
 
-    private var session: Link? {
+    private var session: SyncConnection? {
         guard let link, link.isSecure else { return nil }
         return link
     }
@@ -86,7 +107,7 @@ final class SyncClient {
     func quickSync() async {
         guard session == nil, let macId = store.macId, let key = store.deviceKey(),
               let address = store.lastAddress else { return }
-        let link = Link(to: address, limit: Self.quickLimit)
+        let link = SyncConnection(to: address, limit: Self.quickLimit)
         defer { link.close() }
         do {
             try await link.open()
@@ -124,7 +145,7 @@ final class SyncClient {
         while !Task.isCancelled {
             setStatus(pairing == nil ? .searching : .pairing)
             do {
-                let link: Link
+                let link: SyncConnection
                 if let pairing {
                     link = try await pair(with: pairing)
                 } else {
@@ -162,9 +183,9 @@ final class SyncClient {
         }
     }
 
-    private func pair(with pairing: PairLink) async throws -> Link {
-        guard let port = NWEndpoint.Port(rawValue: pairing.port) else { throw Link.Failure.closed }
-        var opened: Link?
+    private func pair(with pairing: PairLink) async throws -> SyncConnection {
+        guard let port = NWEndpoint.Port(rawValue: pairing.port) else { throw SyncConnection.Failure.closed }
+        var opened: SyncConnection?
         for address in pairing.addresses {
             if let link = try? await open(.hostPort(host: NWEndpoint.Host(address), port: port)) {
                 opened = link
@@ -172,16 +193,16 @@ final class SyncClient {
             }
             try Task.checkCancellation()
         }
-        guard let link = opened else { throw Link.Failure.closed }
+        guard let link = opened else { throw SyncConnection.Failure.closed }
 
         let privateKey = P256.KeyAgreement.PrivateKey()
         let phoneKey = privateKey.publicKey.x963Representation
         let deviceKey = try SyncCrypto.deviceKey(privateKey: privateKey, peerPublicKey: pairing.publicKey, token: pairing.token)
-        let nonce = Self.random(16)
+        let nonce = SyncCrypto.random(16)
         let proof = SyncCrypto.proof(token: pairing.token, phonePublicKey: phoneKey, macPublicKey: pairing.publicKey)
         link.send(.pair(id: store.phoneId, name: Self.deviceName, kind: DeviceKind.ios,
                         publicKey: phoneKey, nonce: nonce, proof: proof))
-        let mac = try await link.startSession(macId: pairing.macId, key: deviceKey, nonce: nonce)
+        let mac = try await macHello(on: link, macId: pairing.macId, key: deviceKey, nonce: nonce)
         link.settle()
         // Only the Mac that showed the QR can derive the key: a first frame
         // that decrypts proves it is that Mac. Store the key only then.
@@ -198,7 +219,7 @@ final class SyncClient {
     /// Tries each address until one answers the hello: an address can take
     /// the connection and still say nothing (a Mac waiting on its Local
     /// Network permission, an old address now someone else's).
-    private func connect() async throws -> Link {
+    private func connect() async throws -> SyncConnection {
         guard let macId = store.macId else { throw CancellationError() }
         guard let key = store.deviceKey() else {
             throw Refused("This iPhone lost its key. Forget the Mac and pair again.")
@@ -224,22 +245,37 @@ final class SyncClient {
                 try Task.checkCancellation()
             }
         }
-        throw Link.Failure.closed
+        throw SyncConnection.Failure.closed
     }
 
-    private func open(_ target: NWEndpoint) async throws -> Link {
+    private func open(_ target: NWEndpoint) async throws -> SyncConnection {
         // A stopped worker must not take over the connection of the one after it.
         try Task.checkCancellation()
-        let link = Link(to: target, limit: Self.helloLimit)
+        let link = SyncConnection(to: target, limit: Self.helloLimit)
         self.link = link
         try await link.open()
         return link
     }
 
-    private func hello(on link: Link, macId: String, key: SymmetricKey) async throws -> (name: String, kind: String) {
-        let nonce = Self.random(16)
+    private func hello(on link: SyncConnection, macId: String, key: SymmetricKey) async throws -> (name: String, kind: String) {
+        let nonce = SyncCrypto.random(16)
         link.send(.hello(id: store.phoneId, nonce: nonce, name: Self.deviceName, kind: DeviceKind.ios))
-        return try await link.startSession(macId: macId, key: key, nonce: nonce)
+        return try await macHello(on: link, macId: macId, key: key, nonce: nonce)
+    }
+
+    /// The Mac's hello, checked to come from the expected Mac, then the session keys.
+    private func macHello(on link: SyncConnection, macId: String, key: SymmetricKey,
+                          nonce: Data) async throws -> (name: String, kind: String) {
+        switch try await link.read() {
+        case .hello(let id, let nonceServer, let name, let kind):
+            guard id == macId else { throw SyncConnection.Failure.unexpected }
+            link.startSession(deviceKey: key, nonceClient: nonce, nonceServer: nonceServer, isMac: false)
+            return (name, kind)
+        case .error(let reason):
+            throw Refused(reason: reason)
+        default:
+            throw SyncConnection.Failure.unexpected
+        }
     }
 
     /// The Mac's Bonjour service, or nil within a few seconds.
@@ -265,7 +301,7 @@ final class SyncClient {
 
     // MARK: - Messages
 
-    private func sendCurrent(on link: Link) {
+    private func sendCurrent(on link: SyncConnection) {
         let settings = timer.settings
         link.send(.state(timer.state, sentAt: Date()))
         link.send(.intervals(settings.intervals, changedAt: settings.intervalsChangedAt, sentAt: Date()))
@@ -308,8 +344,4 @@ final class SyncClient {
     }
 
     private static var deviceName: String { UIDevice.current.name }
-
-    private static func random(_ count: Int) -> Data {
-        SymmetricKey(size: SymmetricKeySize(bitCount: count * 8)).withUnsafeBytes { Data($0) }
-    }
 }

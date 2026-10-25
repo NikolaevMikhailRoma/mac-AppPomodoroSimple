@@ -11,6 +11,7 @@ let package = Package(
         .library(name: "PomodoroCore", targets: ["PomodoroCore"]),
         .library(name: "PomodoroConfig", targets: ["PomodoroConfig"]),
         .library(name: "PomodoroUI", targets: ["PomodoroUI"]),
+        .library(name: "PomodoroSync", targets: ["PomodoroSync"]),
     ],
     targets: [
         // Логика. Ни AppKit, ни SwiftUI, ни одного цвета — это импортируют тесты.
@@ -31,10 +32,13 @@ let package = Package(
             path: "src/ui"
         ),
 
+        // Синхронизация по Wi-Fi, общая для Мака и iPhone: соединение и ключи в Связке ключей.
+        .target(name: "PomodoroSync", dependencies: ["PomodoroCore"], path: "src/sync"),
+
         // Мак: строка меню, окна, системные службы.
         .executableTarget(
             name: "Pomodoro",
-            dependencies: ["PomodoroCore", "PomodoroConfig", "PomodoroUI"],
+            dependencies: ["PomodoroCore", "PomodoroConfig", "PomodoroUI", "PomodoroSync"],
             path: "mac",
             exclude: ["Info.plist", "Resources"]
         ),

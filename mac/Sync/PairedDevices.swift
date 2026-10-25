@@ -2,6 +2,7 @@ import CryptoKit
 import Foundation
 import Observation
 import PomodoroCore
+import PomodoroSync
 import Security
 
 /// The phones this Mac is paired with. Ids and names live in UserDefaults,
@@ -35,7 +36,6 @@ final class PairedDevices {
 
     private static let listKey = "SyncDevices"
     private static let macIdKey = "SyncMacId"
-    private nonisolated static let keychainService = "com.nikolaev.pomodoro.sync"
 
     /// Not a secret: the phone uses it to tell its Mac from others on the network.
     let macId: String
@@ -50,7 +50,7 @@ final class PairedDevices {
         if let id = defaults.string(forKey: Self.macIdKey) {
             macId = id
         } else {
-            macId = Self.randomId()
+            macId = SyncCrypto.random(16).base64URL
             defaults.set(macId, forKey: Self.macIdKey)
         }
         list = defaults.data(forKey: Self.listKey)
@@ -63,7 +63,7 @@ final class PairedDevices {
         guard contains(id) else { return nil }
         if let key = keys[id] { return key }
         if let pending = reading[id] { return await pending.value }
-        let read = Task.detached { Self.readKey(id) }
+        let read = Task.detached { DeviceKeychain.read(id) }
         reading[id] = read
         let key = await read.value
         reading[id] = nil
@@ -78,13 +78,9 @@ final class PairedDevices {
 
     /// False when the Keychain refused the key; the phone then stays unpaired.
     func add(id: String, name: String, kind: String, key: SymmetricKey) -> Bool {
-        SecItemDelete(Self.query(id) as CFDictionary)
-        let data = key.withUnsafeBytes { Data($0) }
-        let status = SecItemAdd(Self.query(id).merging([
-            kSecValueData as String: data,
-            kSecAttrLabel as String: "Pomodoro: \(name)",
-        ]) { a, _ in a } as CFDictionary, nil)
-        guard status == errSecSuccess else { return false }
+        guard DeviceKeychain.save(key, for: id, attributes: [kSecAttrLabel as String: "Pomodoro: \(name)"]) else {
+            return false
+        }
         keys[id] = key
         list.removeAll { $0.id == id }
         list.append(Device(
@@ -97,32 +93,10 @@ final class PairedDevices {
     }
 
     func remove(id: String) {
-        SecItemDelete(Self.query(id) as CFDictionary)
+        DeviceKeychain.delete(id)
         keys[id] = nil
         list.removeAll { $0.id == id }
         save()
-    }
-
-    static func randomId() -> String {
-        Data((0..<16).map { _ in UInt8.random(in: .min ... .max) }).base64URL
-    }
-
-    private nonisolated static func readKey(_ id: String) -> SymmetricKey? {
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(query(id).merging([
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]) { a, _ in a } as CFDictionary, &item)
-        guard status == errSecSuccess, let data = item as? Data else { return nil }
-        return SymmetricKey(data: data)
-    }
-
-    private nonisolated static func query(_ id: String) -> [String: Any] {
-        [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: Self.keychainService,
-            kSecAttrAccount as String: id,
-        ]
     }
 
     private func save() {

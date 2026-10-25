@@ -3,6 +3,7 @@ import Foundation
 import Network
 import Observation
 import PomodoroCore
+import PomodoroSync
 import SystemConfiguration
 
 /// The Mac's side of docs/SYNC.md: listens for paired phones, runs the
@@ -13,6 +14,8 @@ import SystemConfiguration
 final class SyncServer {
     static let preferredPort: UInt16 = 52025
     static let pairingLifetime: TimeInterval = 120
+    /// The time a new connection has to say hello.
+    static let helloLimit: TimeInterval = 10
     /// Dragging the ring changes the state with every mouse move; phones get the newest this often.
     static let sendInterval: TimeInterval = 0.1
     /// This Mac's name in System Settings → General → Sharing, for the phone's device list.
@@ -72,8 +75,8 @@ final class SyncServer {
 
     func remove(_ id: String) {
         for peer in peers where peer.deviceId == id {
-            peer.send(.unpair)
-            peer.close()
+            peer.connection.send(.unpair)
+            peer.connection.close()
         }
         devices.remove(id: id)
         updateListening()
@@ -98,7 +101,7 @@ final class SyncServer {
         guard changedAt != sentIntervalsAt else { return }
         sentIntervalsAt = changedAt
         for peer in peers where peer.isOpen {
-            peer.send(.intervals(intervals, changedAt: changedAt, sentAt: Date()))
+            peer.connection.send(.intervals(intervals, changedAt: changedAt, sentAt: Date()))
         }
     }
 
@@ -107,7 +110,7 @@ final class SyncServer {
         pendingState = nil
         lastBroadcast = Date()
         for peer in peers where peer.isOpen && peer !== pendingSource {
-            peer.send(.state(state, sentAt: lastBroadcast))
+            peer.connection.send(.state(state, sentAt: lastBroadcast))
         }
         pendingSource = nil
     }
@@ -122,7 +125,7 @@ final class SyncServer {
             listener.cancel()
             self.listener = nil
             port = nil
-            peers.forEach { $0.close() }
+            peers.forEach { $0.connection.close() }
         }
     }
 
@@ -175,7 +178,7 @@ final class SyncServer {
         let link = PairLink(
             macId: devices.macId,
             publicKey: key.publicKey.x963Representation,
-            token: Self.random(16),
+            token: SyncCrypto.random(16),
             addresses: Array(Self.localAddresses().prefix(4)),
             port: port
         )
@@ -195,13 +198,48 @@ final class SyncServer {
     // MARK: - Connections
 
     private func accept(_ connection: NWConnection) {
-        let peer = Peer(connection: connection, server: self)
+        let peer = Peer(SyncConnection(connection, limit: Self.helloLimit))
         peers.append(peer)
-        peer.start()
+        Task {
+            await serve(peer)
+            peer.connection.close()
+            peers.removeAll { $0 === peer }
+            connected = Set(peers.filter(\.isOpen).compactMap(\.deviceId))
+        }
+    }
+
+    /// One phone: its plain hello, checked, then encrypted messages until either side closes.
+    private func serve(_ peer: Peer) async {
+        let connection = peer.connection
+        do {
+            try await connection.open()
+            let first = try await connection.read()
+            // Checking it can wait on a Keychain password prompt; that gets a minute.
+            connection.settle()
+            switch await handshake(first) {
+            case .failure(.reason(let reason)):
+                connection.send(.error(reason))
+                return
+            case .failure(.silent):
+                return
+            case .success(let phone):
+                guard !connection.isClosed else { return }
+                let nonce = SyncCrypto.random(16)
+                connection.send(.hello(id: devices.macId, nonce: nonce, name: Self.macName, kind: DeviceKind.mac))
+                connection.startSession(deviceKey: phone.key, nonceClient: phone.nonce, nonceServer: nonce, isMac: true)
+                peer.deviceId = phone.id
+                opened(peer)
+            }
+            while true {
+                received(try await connection.read(), from: peer)
+            }
+        } catch {
+            // Closed, or a frame that did not open: either way this phone is gone.
+        }
     }
 
     /// The answer to a phone's first frame: the device key, or the error to send back.
-    fileprivate func handshake(_ message: SyncMessage) async -> Result<Accepted, HandshakeError> {
+    private func handshake(_ message: SyncMessage) async -> Result<Accepted, HandshakeError> {
         switch message {
         case .hello(let id, let nonce, _, _):
             guard devices.contains(id) else { return .failure(.reason("unknown-device")) }
@@ -226,15 +264,15 @@ final class SyncServer {
         }
     }
 
-    fileprivate func opened(_ peer: Peer) {
+    private func opened(_ peer: Peer) {
         connected = Set(peers.filter(\.isOpen).compactMap(\.deviceId))
-        if let state = currentState() { peer.send(.state(state, sentAt: Date())) }
+        if let state = currentState() { peer.connection.send(.state(state, sentAt: Date())) }
         if let (intervals, changedAt) = currentIntervals() {
-            peer.send(.intervals(intervals, changedAt: changedAt, sentAt: Date()))
+            peer.connection.send(.intervals(intervals, changedAt: changedAt, sentAt: Date()))
         }
     }
 
-    fileprivate func received(_ message: SyncMessage, from peer: Peer) {
+    private func received(_ message: SyncMessage, from peer: Peer) {
         switch message {
         case .state(let state, let sentAt):
             receivingFrom = peer
@@ -244,23 +282,14 @@ final class SyncServer {
             onIntervals(intervals, SyncRules.shifted(changedAt, by: Date().timeIntervalSince(sentAt)))
         case .unpair:
             if let id = peer.deviceId { devices.remove(id: id) }
-            peer.close()
+            peer.connection.close()
             updateListening()
         default:
             break
         }
     }
 
-    fileprivate func closed(_ peer: Peer) {
-        peers.removeAll { $0 === peer }
-        connected = Set(peers.filter(\.isOpen).compactMap(\.deviceId))
-    }
-
     // MARK: - Helpers
-
-    fileprivate static func random(_ count: Int) -> Data {
-        SymmetricKey(size: SymmetricKeySize(bitCount: count * 8)).withUnsafeBytes { Data($0) }
-    }
 
     /// The Mac's IPv4 addresses, for the QR: pairing then needs no discovery.
     private static func localAddresses() -> [String] {
@@ -283,148 +312,28 @@ final class SyncServer {
 }
 
 /// A phone let in: its id, its device key and its hello nonce.
-fileprivate struct Accepted {
+private struct Accepted {
     let id: String
     let key: SymmetricKey
     let nonce: Data
 }
 
-fileprivate enum HandshakeError: Error {
+private enum HandshakeError: Error {
     /// Sent back to the phone before closing.
     case reason(String)
     /// Not a phone speaking this protocol: just close.
     case silent
 }
 
-/// One phone's connection: the plain hello, then encrypted frames.
+/// One phone's connection, and which phone it is once its hello checked out.
 @MainActor
 private final class Peer {
-    private static let pingAfter: TimeInterval = 20
-    private static let silenceLimit: TimeInterval = 60
-    private static let handshakeLimit: TimeInterval = 10
+    let connection: SyncConnection
+    var deviceId: String?
 
-    let connection: NWConnection
-    weak var server: SyncServer?
-    private(set) var deviceId: String?
-    private var cipher: SessionCipher?
-    private var reader = FrameReader()
-    private var lastSent = Date()
-    private var lastReceived = Date()
-    private var watchdog: Timer?
-    private var isClosed = false
-    /// The hello is being checked; it can wait on a Keychain password prompt.
-    private var checkingHello = false
+    var isOpen: Bool { connection.isSecure }
 
-    var isOpen: Bool { cipher != nil && !isClosed }
-
-    init(connection: NWConnection, server: SyncServer) {
+    init(_ connection: SyncConnection) {
         self.connection = connection
-        self.server = server
-    }
-
-    func start() {
-        connection.stateUpdateHandler = { [weak self] state in
-            MainActor.assumeIsolated {
-                switch state {
-                case .failed, .cancelled: self?.close()
-                default: break
-                }
-            }
-        }
-        connection.start(queue: .main)
-        watchdog = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.checkTimers() }
-        }
-        receive()
-    }
-
-    func send(_ message: SyncMessage) {
-        guard !isClosed else { return }
-        let payload: Data
-        if cipher != nil {
-            guard let sealed = try? cipher!.seal(message.data) else { return close() }
-            payload = sealed
-        } else {
-            payload = message.data
-        }
-        lastSent = Date()
-        connection.send(content: FrameReader.frame(payload), completion: .contentProcessed { _ in })
-    }
-
-    func close() {
-        guard !isClosed else { return }
-        isClosed = true
-        watchdog?.invalidate()
-        // Lets a last frame (an error, an unpair) go out first.
-        connection.send(content: nil, contentContext: .finalMessage, isComplete: true,
-                        completion: .contentProcessed { [connection] _ in connection.cancel() })
-        server?.closed(self)
-    }
-
-    private func receive() {
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, isComplete, error in
-            MainActor.assumeIsolated {
-                guard let self, !self.isClosed else { return }
-                if let data, !data.isEmpty {
-                    self.reader.append(data)
-                    self.drain()
-                }
-                if isComplete || error != nil { self.close() } else if !self.isClosed { self.receive() }
-            }
-        }
-    }
-
-    private func drain() {
-        do {
-            // Frames after the hello wait in the reader until it is checked.
-            while !isClosed, !checkingHello, let frame = try reader.next() {
-                lastReceived = Date()
-                try handle(frame)
-            }
-        } catch {
-            close()
-        }
-    }
-
-    private func handle(_ frame: Data) throws {
-        guard cipher != nil else {
-            guard let message = SyncMessage(data: frame) else { throw SyncCrypto.Failure.badFrame }
-            checkingHello = true
-            Task { [weak self] in await self?.handshake(message) }
-            return
-        }
-        let plaintext = try cipher!.open(frame)
-        guard let message = SyncMessage(data: plaintext) else { throw SyncCrypto.Failure.badFrame }
-        server?.received(message, from: self)
-    }
-
-    private func handshake(_ message: SyncMessage) async {
-        guard let server else { return close() }
-        let result = await server.handshake(message)
-        checkingHello = false
-        guard !isClosed else { return }
-        defer { drain() }
-        switch result {
-        case .failure(.reason(let reason)):
-            send(.error(reason))
-            close()
-        case .failure(.silent):
-            close()
-        case .success(let phone):
-            let nonceServer = SyncServer.random(16)
-            send(.hello(id: server.devices.macId, nonce: nonceServer, name: SyncServer.macName, kind: DeviceKind.mac))
-            let keys = SyncCrypto.sessionKeys(deviceKey: phone.key, nonceClient: phone.nonce, nonceServer: nonceServer)
-            cipher = SessionCipher(sendKey: keys.s2c, receiveKey: keys.c2s)
-            deviceId = phone.id
-            server.opened(self)
-        }
-    }
-
-    private func checkTimers() {
-        let now = Date()
-        // A hello waiting on the Keychain prompt waits as long as the user does.
-        if cipher == nil, !checkingHello, now.timeIntervalSince(lastReceived) > Self.handshakeLimit { return close() }
-        if now.timeIntervalSince(lastReceived) > Self.silenceLimit { return close() }
-        if isOpen, now.timeIntervalSince(lastSent) > Self.pingAfter { send(.ping) }
     }
 }

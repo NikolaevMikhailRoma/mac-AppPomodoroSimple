@@ -6,6 +6,11 @@ import Foundation
 public enum SyncCrypto {
     public enum Failure: Error { case badKey, badFrame }
 
+    /// Random bytes for ids, nonces and tokens.
+    public static func random(_ count: Int) -> Data {
+        SymmetricKey(size: SymmetricKeySize(bitCount: count * 8)).withUnsafeBytes { Data($0) }
+    }
+
     /// The long-lived key a pairing ends with. The token salts it, so the QR
     /// and the key exchange are both needed.
     public static func deviceKey(
