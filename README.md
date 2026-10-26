@@ -11,6 +11,8 @@
 
 A minimal pomodoro timer for the Mac menu bar, Android and iPhone (the Mac app is 1.4 MB). Each app works on its own, and they can be paired.
 
+<p><img src="docs/mac-timer.gif" width="255" alt="Pomodoro timer in the Mac menu bar"></p>
+
 # Design
 The timer is the same everywhere: 
 - red while working, green on a break; the Mac's menu bar icon turns grey when stopped. 
